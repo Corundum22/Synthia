@@ -4,12 +4,18 @@
 #include "esp_log.h"
 #include "driver/dac_oneshot.h"
 #include "driver/gptimer.h"
+#include "driver/gpio.h"
 
-#define TIMER_FREQ 80000000 // 80 MHz
+#define TIMER_FREQ 40000000 // 40 MHz
+#define FREQ_UP_BUTTON 12
+#define FREQ_DOWN_BUTTON 14
+#define GPIO_INPUT_PIN_SEL ((1ULL<<FREQ_UP_BUTTON) | (1ULL<<FREQ_DOWN_BUTTON))
+#define ESP_INTR_FLAG_DEFAULT 0
 
 static dac_oneshot_handle_t dac_handle;
 static gptimer_handle_t wave_gen_timer;
 static TaskHandle_t audio_task_handle;
+static uint16_t current_note = 69;
 
 uint8_t sin_array[] = { 127, 130, 133, 136, 139, 143, 146, 149, 
     152, 155, 158, 161, 164, 167, 170, 173, 176, 179, 182, 184, 
@@ -54,36 +60,41 @@ static uint32_t sawtooth_array[] = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11,
     240, 241, 242, 243, 244, 245, 246, 247, 248, 249, 250, 251, 
     252, 253, 254, 255 };
 
-uint32_t midi_note_to_strange_period[] = { 38203, 36085, 
-    34041, 32150, 30340, 28643, 27033, 25510, 24076, 22727, 21448,
-    20253, 19113, 18043, 17030, 16067, 15170, 14315, 13516, 12755,
-    12038, 11364, 10724, 10123, 9557, 9019, 8513, 8035, 7585,
-    7159, 6757, 6378, 6020, 5682, 5363, 5062, 4778, 4509, 4256,
-    4018, 3792, 3579, 3378, 3189, 3010, 2841, 2681, 2531, 2389,
-    2255, 2128, 2009, 1896, 1790, 1689, 1594, 1505, 1420, 1341,
-    1265, 1194, 1127, 1064, 1004, 948, 895, 845, 797, 752, 710,
-    670, 633, 597, 564, 532, 502, 474, 447, 422, 399, 376, 355,
-    338, 316, 299, 282, 266, 251, 237, 224, 211, 199, 188, 178, 168,
-    158, 149, 141, 133, 126, 119, 112, 106, 100, 94, 89, 84, 79,
-    75, 70, 67, 63, 59, 56, 53, 50, 47, 44, 42, 40, 37, 35, 33,
-    31, 30, 28, 26, 25 };
+uint32_t ratio_num_denom[] = { 745340, 1641517, 1413176, 369624, 
+    788769, 1360142, 1337858, 51021, 1191896, 125000, 482663, 
+    536564, 372670, 333715, 706588, 184812, 477812, 680071, 
+    668929, 51021, 595948, 62500, 482663, 268282, 186335, 333715, 
+    353294, 92406, 238906, 289925, 337843, 51021, 297974, 31250, 
+    34859, 134141, 186335, 160093, 176647, 46203, 119453, 100221, 
+    23649, 51021, 148987, 15625, 34859, 99973, 107501, 86811, 
+    69169, 46203, 72051, 47426, 23649, 51021, 27841, 15625, 
+    34859, 17084, 47181, 36641, 38309, 46203, 23701, 23713, 
+    23649, 39063, 27841, 15625, 31172, 8542, 13139, 25085, 7715, 
+    24357, 23701, 14541, 16681, 18535, 16366, 15625, 15586, 
+    4271, 13139, 5778, 7715, 3641, 11732, 4586, 3484, 8271, 
+    8183, 8434, 7793, 4271, 5599, 2889, 3791, 3641, 5866, 2293, 
+    1742, 1993, 1646, 4217, 3687, 3836, 1829, 2889, 1962, 2103, 
+    2933, 2293, 871, 1993, 823, 799, 2053, 1918, 1829, 1744, 
+    981, 769, 1348, 769, 871, 710, 39, 91, 83, 23, 52, 95, 99, 
+    4, 99, 11, 45, 53, 39, 37, 83, 23, 63, 95, 99, 8, 99, 11, 
+    90, 53, 39, 74, 83, 23, 63, 81, 100, 16, 99, 11, 13, 53, 
+    78, 71, 83, 23, 63, 56, 14, 32, 99, 11, 26, 79, 90, 77, 
+    65, 46, 76, 53, 28, 64, 37, 22, 52, 27, 79, 65, 72, 92, 
+    50, 53, 56, 98, 74, 44, 93, 27, 44, 89, 29, 97, 100, 65, 
+    79, 93, 87, 88, 93, 27, 88, 41, 58, 29, 99, 41, 33, 83, 
+    87, 95, 93, 54, 75, 41, 57, 58, 99, 41, 33, 40, 35, 95, 
+    88, 97, 49, 82, 59, 67, 99, 82, 33, 80, 35, 36, 98, 97, 
+    98, 99, 59, 49, 91, 55, 66, 57 };
 
-static inline uint32_t wave(uint16_t strange_period, uint64_t time) {
-    //uint32_t point_in_cycle = (time >> 7) & 0b11111111; // gives 30.52 Hz
-    uint32_t point_in_cycle = (time * strange_period) & 0b11111111;
-    /*
-     * MAX_FREQ: the maximum frequency to completely cycle through the array
-     * ARRAY_LEN: the length of the array
-     * ARRAY_LEN_BITS: the number of bits needed to access the entire array
-     * ARRAY_LEN = 2^ARRAY_LEN_BITS
-     * MAX_FREQ = TIMER_FREQ / 2^ARRAY_LEN_BITS = TIMER_FREQ / ARRAY_LEN
-     * achieved_freq = MAX_FREQ / strange_period
-     *
-     * tones_from_max: the number of tones away (under) MAX_FREQ
-     * TONES_PER_OCTAVE: the number of tones per octave (e.g. TONES_PER_OCTAVE = 12 for 12EDO)
-     * achieved_freq = MAX_FREQ * 2^(tones_from_max / TONES_PER_OCTAVE)
-     * strange_period = 2^(TONES_PER_OCTAVE / tones_from_max)
-     * */
+/*static inline uint32_t wave(uint32_t ratio_numerator, uint32_t ratio_denominator, uint32_t time) {
+    uint32_t point_in_cycle = ((time * ratio_numerator) / ratio_denominator) & 0b11111111;
+
+    return sin_array[point_in_cycle];
+}*/
+static inline uint32_t wave(uint32_t midi_note_number, uint32_t time) {
+    uint32_t ratio_numerator = ratio_num_denom[midi_note_number + 128];
+    uint32_t ratio_denominator = ratio_num_denom[midi_note_number];
+    uint32_t point_in_cycle = ((time * ratio_numerator) / ratio_denominator) & 0b11111111;
 
     return sin_array[point_in_cycle];
 }
@@ -93,16 +104,38 @@ void task_audio_generate() {
         uint64_t time;
         gptimer_get_raw_count(wave_gen_timer, &time);
 
-        uint8_t data = (uint8_t) wave(midi_note_to_strange_period[50], time);
+        //uint8_t data = (uint8_t) wave(100, (uint32_t) time); // gives 1.56 kHz
+        //uint8_t data = (uint8_t) wave(midi_note_to_strange_period[current_note] >> 1, (uint32_t) time);
+
+        uint8_t data = (uint8_t) wave(current_note & 0b01111111, (uint32_t) time);
+        data = (uint8_t) wave(current_note & 0b01111111, (uint32_t) time);
+        data = (uint8_t) wave(current_note & 0b01111111, (uint32_t) time);
+        data = (uint8_t) wave(current_note & 0b01111111, (uint32_t) time);
+        data = (uint8_t) wave(current_note & 0b01111111, (uint32_t) time);
+        data = (uint8_t) wave(current_note & 0b01111111, (uint32_t) time);
+        data = (uint8_t) wave(current_note & 0b01111111, (uint32_t) time);
+        data = (uint8_t) wave(current_note & 0b01111111, (uint32_t) time);
 
         ESP_ERROR_CHECK(dac_oneshot_output_voltage(dac_handle, data));
+    }
+}
+
+static void IRAM_ATTR gpio_interrupt_handler(void *args) {
+    int gpio_num = (int) args;
+    switch (gpio_num) {
+        case 12:
+            current_note++;
+            break;
+        case 14:
+            current_note--;
+            break;
     }
 }
 
 static void timer_init() {
     // wave_gen_timer init
     gptimer_config_t wave_gen_timer_config = {
-        .clk_src = GPTIMER_CLK_SRC_DEFAULT,
+        .clk_src = GPTIMER_CLK_SRC_APB,
         .direction = GPTIMER_COUNT_UP,
         .resolution_hz = TIMER_FREQ,
     };
@@ -119,6 +152,20 @@ static void dac_init() {
     ESP_ERROR_CHECK(dac_oneshot_new_channel(&dac_config, &dac_handle));
 }
 
+static void gpio_init() {
+    gpio_config_t io_conf = {
+        .intr_type = GPIO_INTR_POSEDGE,
+        .pin_bit_mask = GPIO_INPUT_PIN_SEL,
+        .mode = GPIO_MODE_INPUT,
+        .pull_up_en = 1,
+    };
+    gpio_config(&io_conf);
+
+    gpio_install_isr_service(ESP_INTR_FLAG_DEFAULT);
+    gpio_isr_handler_add(FREQ_UP_BUTTON, gpio_interrupt_handler, (void *) FREQ_UP_BUTTON);
+    gpio_isr_handler_add(FREQ_DOWN_BUTTON, gpio_interrupt_handler, (void *) FREQ_DOWN_BUTTON);
+}
+
 static void task_create() {
     xTaskCreate(task_audio_generate, "Audio Generation Task", 4096, NULL, 10, &audio_task_handle);
 }
@@ -131,6 +178,9 @@ void app_main(void) {
 
     dac_init();
     printf("DAC init finished\n");
+
+    gpio_init();
+    printf("GPIO init finished\n");
 
     task_create();
 }
