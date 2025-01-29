@@ -11,6 +11,10 @@ dac_oneshot_handle_t dac_handle;
 gptimer_handle_t wave_gen_timer;
 uint16_t current_note = 69;
 
+extern const uint32_t sin_array[];
+extern const uint32_t ratio_num_denom[];
+extern const uint32_t sawtooth_array[];
+
 
 uint32_t wave(uint32_t midi_note_number, uint32_t time) {
     uint32_t ratio_numerator = ratio_num_denom[midi_note_number + 128];
