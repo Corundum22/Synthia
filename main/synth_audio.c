@@ -3,26 +3,31 @@
 #include "driver/dac_oneshot.h"
 #include "driver/gptimer.h"
 #include "waveform_tables.h"
-
+#include "uart_handler.h"
 #include "synth_audio.h"
 
+
+extern uint_fast8_t on_notes[];
 
 dac_oneshot_handle_t dac_handle;
 gptimer_handle_t wave_gen_timer;
 uint16_t current_note = 69;
 
 extern const uint32_t sin_array[];
-extern const uint32_t ratio_num_denom[];
+extern const uint32_t ratio_num[];
+extern const uint32_t ratio_denom[];
 extern const uint32_t sawtooth_array[];
 
 
-uint32_t wave(uint32_t midi_note_number, uint32_t time) {
-    uint32_t ratio_numerator = ratio_num_denom[midi_note_number + 128];
-    uint32_t ratio_denominator = ratio_num_denom[midi_note_number];
+uint_fast32_t wave(uint_fast8_t midi_note_number, uint_fast32_t time) {
+    uint_fast32_t ratio_numerator = ratio_num[midi_note_number];
+    uint_fast32_t ratio_denominator = ratio_denom[midi_note_number];
 
-    uint32_t point_in_cycle = ((time * ratio_numerator) / ratio_denominator) & 0b11111111;
+    uint_fast32_t point_in_cycle = ((time * ratio_numerator) / ratio_denominator) & 0b11111111;
 
-    return sin_array[point_in_cycle];
+    uint_fast32_t result = sin_array[point_in_cycle];
+
+    return result;
 }
 
 void task_audio_generate() {
@@ -30,9 +35,17 @@ void task_audio_generate() {
         uint64_t time;
         gptimer_get_raw_count(wave_gen_timer, &time);
 
-        uint8_t data = (uint8_t) wave(current_note & 0b01111111, (uint32_t) time);
+        uint32_t data = 0;
+        uint_fast8_t times_added = 0;
+        for (int i = 0; i < NUM_VOICES; i++) {
+            if (on_notes[i] != 0) {
+                data += wave(on_notes[i], time);
+                times_added++;
+            }
+        }
+        if (times_added != 0) data /= times_added;
 
-        ESP_ERROR_CHECK(dac_oneshot_output_voltage(dac_handle, data));
+        ESP_ERROR_CHECK(dac_oneshot_output_voltage(dac_handle, (uint8_t) data));
     }
 }
 

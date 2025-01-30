@@ -1,11 +1,13 @@
+#include <string.h>
 #include "freertos/FreeRTOS.h"
 #include "driver/gpio.h"
 #include "driver/ledc.h"
 #include "esp_err.h"
 #include "basic_io.h"
-#include "synth_audio.h"
+#include "uart_handler.h"
 
-extern uint16_t current_note;
+
+extern uint_fast8_t on_notes[];
 
 void ledc_init() {
     ledc_timer_config_t ledc_timer_conf = {
@@ -35,16 +37,13 @@ void ledc_init() {
 void gpio_interrupt_handler(void *args) {
     int gpio_num = (int) args;
     switch (gpio_num) {
-        case 12:
-            current_note++;
-            break;
-        case 14:
-            current_note--;
+        case MIDI_PANIC_BUTTON:
+            for (int i = 0; i < NUM_VOICES; i++) on_notes[i] = 0;
+            ESP_ERROR_CHECK(ledc_set_duty(LEDC_MODE, LEDC_CHANNEL, 0b00111111));
+            ESP_ERROR_CHECK(ledc_update_duty(LEDC_MODE, LEDC_CHANNEL));
             break;
     }
 
-    ESP_ERROR_CHECK(ledc_set_duty(LEDC_MODE, LEDC_CHANNEL, (current_note * 10) & 0b01111111));
-    ESP_ERROR_CHECK(ledc_update_duty(LEDC_MODE, LEDC_CHANNEL));
 }
 
 void gpio_init() {
@@ -57,6 +56,5 @@ void gpio_init() {
     gpio_config(&io_conf);
 
     gpio_install_isr_service(ESP_INTR_FLAG_DEFAULT);
-    gpio_isr_handler_add(FREQ_UP_BUTTON, gpio_interrupt_handler, (void *) FREQ_UP_BUTTON);
-    gpio_isr_handler_add(FREQ_DOWN_BUTTON, gpio_interrupt_handler, (void *) FREQ_DOWN_BUTTON);
+    gpio_isr_handler_add(MIDI_PANIC_BUTTON, gpio_interrupt_handler, (void *) MIDI_PANIC_BUTTON);
 }

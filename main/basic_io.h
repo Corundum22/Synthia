@@ -1,9 +1,8 @@
 #ifndef BASIC_IO_H_
 #define BASIC_IO_H_
 
-#define FREQ_UP_BUTTON          12
-#define FREQ_DOWN_BUTTON        14
-#define GPIO_INPUT_PIN_SEL      ((1ULL<<FREQ_UP_BUTTON) | (1ULL<<FREQ_DOWN_BUTTON))
+#define MIDI_PANIC_BUTTON       12
+#define GPIO_INPUT_PIN_SEL      (1ULL<<MIDI_PANIC_BUTTON)
 #define ESP_INTR_FLAG_DEFAULT   0
 
 #define LEDC_TIMER              LEDC_TIMER_0

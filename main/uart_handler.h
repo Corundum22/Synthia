@@ -12,8 +12,10 @@
 #define NOTE_ON                 (0b001 << 4)
 #define NOTE_OFF                (0b000 << 4)
 
+#define NUM_VOICES              8
 
-extern uint_fast8_t volume_by_note[128];
+
+extern uint_fast8_t on_notes[8];
 
 
 void uart_init();

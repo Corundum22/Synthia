@@ -6,19 +6,21 @@ NUM_VALUES = 256
 STARTING_LINE = "uint32_t ratio_num_denom[] = { "
 LEFT_SPACES = 4
 
-#def func_to_apply(x):
-#    return int(127.5 * (1 + sin(2 * pi * x / NUM_VALUES)))
 def func_to_apply(x):
-    if (x < 128):
-        current_freq = 440 * 2**((x - 69) / 12)
-        target_val = 40000000 / (2**8 * current_freq)
-        frac_res = Fraction(*target_val.as_integer_ratio()).limit_denominator(100);
-        return frac_res.numerator #this will be applied as a numerator to the current time
-    else:
-        current_freq = 440 * 2**((x - 69 - 128) / 12)
-        target_val = 40000000 / (2**8 * current_freq)
-        frac_res = Fraction(*target_val.as_integer_ratio()).limit_denominator(100);
-        return frac_res.denominator #this will be applied as a denominator to the current time
+    #return int(127.5 * (1 + sin(2 * pi * x / NUM_VALUES)))
+    if (x < 128) return 256;
+    else return 0;
+#def func_to_apply(x):
+#    if (x < 128):
+#        current_freq = 440 * 2**((x - 69) / 12)
+#        target_val = 40000000 / (2**8 * current_freq)
+#        frac_res = Fraction(*target_val.as_integer_ratio()).limit_denominator(100);
+#        return frac_res.numerator #this will be applied as a numerator to the current time
+#    else:
+#        current_freq = 440 * 2**((x - 69 - 128) / 12)
+#        target_val = 40000000 / (2**8 * current_freq)
+#        frac_res = Fraction(*target_val.as_integer_ratio()).limit_denominator(100);
+#        return frac_res.denominator #this will be applied as a denominator to the current time
 
 
 

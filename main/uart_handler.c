@@ -8,9 +8,28 @@
 #include "uart_handler.h"
 
 
-uint_fast8_t volume_by_note[128] = {0};
+uint_fast8_t on_notes[NUM_VOICES] = {0};
 
 QueueHandle_t midi_uart_queue;
+
+
+static void set_on_note(uint_fast8_t key_num) {
+    for (int i = 0; i < NUM_VOICES; i++) {
+        if (on_notes[i] != 0) {
+            on_notes[i] = key_num;
+            return;
+        }
+    }
+}
+
+static void unset_on_note(uint_fast8_t key_num) {
+    for (int i = 0; i < NUM_VOICES; i++) {
+        if (on_notes[i] == key_num) {
+            on_notes[i] = 0;
+            return;
+        }
+    }
+}
 
 
 void uart_init() {
@@ -54,20 +73,22 @@ void task_midi_uart(void *pvParameters) {
                     for (int i = 0; dtmp[i] != 0; i++) {
                         if (dtmp[i] & 0b10000000) {
                             channel_num = dtmp[i] & 0b00001111;
-                        } else {
+
                             switch (dtmp[i] & 0b01110000) {
                                 case NOTE_ON:
                                     i++;
                                     key_num = dtmp[i];
                                     i++;
                                     velocity = dtmp[i];
-                                    volume_by_note[key_num] = velocity;
+                                    set_on_note(key_num);
+                                    printf("Note on received!\n");
                                     break;
                                 case NOTE_OFF:
                                     i++;
                                     key_num = dtmp[i];
                                     i++;
-                                    volume_by_note[key_num] = 0;
+                                    unset_on_note(key_num);
+                                    printf("Note off received!\n");
                                     break;
                                 default:
                                     break;
