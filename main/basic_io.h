@@ -18,10 +18,12 @@
 #define VOL_POT       ADC_CHANNEL_4 // gpio32
 #define LOW_PASS_POT  ADC_CHANNEL_5 // gpio33
 
-#define MENU_ATTEN    ADC_ATTEN_DB_0
-#define MENU_BITS     ADC_BITWIDTH_9
+#define MENU_ATTEN    ADC_ATTEN_DB_12
+#define MENU_BITS     ADC_BITWIDTH_11
 #define MENU_UNIT     ADC_UNIT_1
 #define DEFAULT_VREF  1100
+
+#define CHOSEN_ADC_CALI_SCHEME  ESP_ADC_CAL_VAL_EFUSE_VREF
 
 
 extern uint_fast16_t sin_volume;

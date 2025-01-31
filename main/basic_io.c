@@ -4,6 +4,7 @@
 #include "freertos/FreeRTOS.h"
 #include "driver/gpio.h"
 #include "driver/ledc.h"
+#include "esp_log.h"
 #include "esp_adc/adc_oneshot.h"
 #include "esp_adc/adc_cali.h"
 #include "esp_adc/adc_cali_scheme.h"
@@ -11,6 +12,8 @@
 #include "basic_io.h"
 #include "uart_handler.h"
 
+
+const static char *TAG = "BASIC IO";
 
 uint_fast8_t menu_select = 0;
 
@@ -21,9 +24,71 @@ uint_fast16_t sin_3 = 0;
 
 adc_channel_t current_channel = MENU_POT_1;
 adc_oneshot_unit_handle_t menu_adc_handle;
+    
+static adc_cali_handle_t menu_pot_1_cali_handle = NULL;
+static adc_cali_handle_t menu_pot_2_cali_handle = NULL;
+static adc_cali_handle_t menu_pot_3_cali_handle = NULL;
+static adc_cali_handle_t menu_pot_4_cali_handle = NULL;
+static adc_cali_handle_t menu_vol_pot_cali_handle = NULL;
+static adc_cali_handle_t menu_low_pass_cali_handle = NULL;
+
+bool do_pot_1_calibration;
+bool do_pot_2_calibration;
+bool do_pot_3_calibration;
+bool do_pot_4_calibration;
+bool do_vol_pot_calibration;
+bool do_low_pass_calibration;
 
 extern uint_fast8_t on_notes[];
 
+
+static bool adc_calibration_init(adc_unit_t unit, adc_channel_t channel, adc_atten_t atten, adc_cali_handle_t *out_handle) {
+    adc_cali_handle_t handle = NULL;
+    esp_err_t ret = ESP_FAIL;
+    bool calibrated = false;
+
+#if ADC_CALI_SCHEME_CURVE_FITTING_SUPPORTED
+    if (!calibrated) {
+        ESP_LOGI(TAG, "calibration scheme version is %s", "Curve Fitting");
+        adc_cali_curve_fitting_config_t cali_config = {
+            .unit_id = unit,
+            .chan = channel,
+            .atten = atten,
+            .bitwidth = MENU_BITS,
+        };
+        ret = adc_cali_create_scheme_curve_fitting(&cali_config, &handle);
+        if (ret == ESP_OK) {
+            calibrated = true;
+        }
+    }
+#endif
+
+#if ADC_CALI_SCHEME_LINE_FITTING_SUPPORTED
+    if (!calibrated) {
+        ESP_LOGI(TAG, "calibration scheme version is %s", "Line Fitting");
+        adc_cali_line_fitting_config_t cali_config = {
+            .unit_id = unit,
+            .atten = atten,
+            .bitwidth = MENU_BITS,
+        };
+        ret = adc_cali_create_scheme_line_fitting(&cali_config, &handle);
+        if (ret == ESP_OK) {
+            calibrated = true;
+        }
+    }
+#endif
+
+    *out_handle = handle;
+    if (ret == ESP_OK) {
+        ESP_LOGI(TAG, "Calibration Success");
+    } else if (ret == ESP_ERR_NOT_SUPPORTED || !calibrated) {
+        ESP_LOGW(TAG, "eFuse not burnt, skip software calibration");
+    } else {
+        ESP_LOGE(TAG, "Invalid arg or no memory");
+    }
+
+    return calibrated;
+}
 
 
 void task_adc() {
@@ -41,26 +106,38 @@ void task_adc() {
 
         switch (current_channel) {
             case MENU_POT_1:
+                if (do_pot_1_calibration)
+                    ESP_ERROR_CHECK(adc_cali_raw_to_voltage(menu_pot_1_cali_handle, adc_result, &adc_result));
                 pot_1 = adc_result;
                 current_channel = MENU_POT_2;
                 break;
             case MENU_POT_2:
+                if (do_pot_2_calibration)
+                    ESP_ERROR_CHECK(adc_cali_raw_to_voltage(menu_pot_2_cali_handle, adc_result, &adc_result));
                 pot_2 = adc_result;
                 current_channel = MENU_POT_3;
                 break;
             case MENU_POT_3:
+                if (do_pot_3_calibration)
+                    ESP_ERROR_CHECK(adc_cali_raw_to_voltage(menu_pot_3_cali_handle, adc_result, &adc_result));
                 pot_3 = adc_result;
                 current_channel = MENU_POT_4;
                 break;
             case MENU_POT_4:
+                if (do_pot_4_calibration)
+                    ESP_ERROR_CHECK(adc_cali_raw_to_voltage(menu_pot_4_cali_handle, adc_result, &adc_result));
                 pot_4 = adc_result;
                 current_channel = VOL_POT;
                 break;
             case VOL_POT:
+                if (do_vol_pot_calibration)
+                    ESP_ERROR_CHECK(adc_cali_raw_to_voltage(menu_vol_pot_cali_handle, adc_result, &adc_result));
                 pot_vol = adc_result;
                 current_channel = LOW_PASS_POT;
                 break;
             case LOW_PASS_POT:
+                if (do_low_pass_calibration)
+                    ESP_ERROR_CHECK(adc_cali_raw_to_voltage(menu_low_pass_cali_handle, adc_result, &adc_result));
                 pot_low_pass = adc_result;
                 printf("%06u %06u %06u %06u\r", sin_volume, sin_1, sin_2, sin_3); // TODO: remove line later
                 current_channel = MENU_POT_1;
@@ -81,7 +158,7 @@ void task_adc() {
                 break;
         }
 
-        vTaskDelay(pdMS_TO_TICKS(5));
+        vTaskDelay(pdMS_TO_TICKS(50));
     }
 }
 
@@ -101,6 +178,13 @@ void adc_init() {
     ESP_ERROR_CHECK(adc_oneshot_config_channel(menu_adc_handle, MENU_POT_4, &menu_channel_config));
     ESP_ERROR_CHECK(adc_oneshot_config_channel(menu_adc_handle, VOL_POT, &menu_channel_config));
     ESP_ERROR_CHECK(adc_oneshot_config_channel(menu_adc_handle, LOW_PASS_POT, &menu_channel_config));
+
+    do_pot_1_calibration = adc_calibration_init(MENU_UNIT, MENU_POT_1, MENU_ATTEN, &menu_pot_1_cali_handle);
+    do_pot_2_calibration = adc_calibration_init(MENU_UNIT, MENU_POT_2, MENU_ATTEN, &menu_pot_2_cali_handle);
+    do_pot_3_calibration = adc_calibration_init(MENU_UNIT, MENU_POT_3, MENU_ATTEN, &menu_pot_3_cali_handle);
+    do_pot_4_calibration = adc_calibration_init(MENU_UNIT, MENU_POT_4, MENU_ATTEN, &menu_pot_4_cali_handle);
+    do_vol_pot_calibration = adc_calibration_init(MENU_UNIT, VOL_POT, MENU_ATTEN, &menu_vol_pot_cali_handle);
+    do_low_pass_calibration = adc_calibration_init(MENU_UNIT, LOW_PASS_POT, MENU_ATTEN, &menu_low_pass_cali_handle);
 }
 
 

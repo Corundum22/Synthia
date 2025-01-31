@@ -19,7 +19,7 @@ extern const uint32_t ratio_denom[];
 extern const uint32_t sawtooth_array[];
 
 
-uint_fast32_t wave(uint_fast8_t midi_note_number, uint_fast32_t time) {
+static inline uint_fast32_t wave(uint_fast8_t midi_note_number, uint_fast32_t time) {
     uint_fast32_t ratio_numerator = ratio_num[midi_note_number];
     uint_fast32_t ratio_denominator = ratio_denom[midi_note_number];
 
