@@ -23,7 +23,7 @@
 #define MENU_UNIT     ADC_UNIT_1
 #define DEFAULT_VREF  1100
 
-#define CHOSEN_ADC_CALI_SCHEME  ESP_ADC_CAL_VAL_EFUSE_VREF
+#define CHOSEN_ADC_CALI_SCHEME   ESP_ADC_CAL_VAL_EFUSE_VREF
 
 
 extern uint_fast16_t sin_volume;
