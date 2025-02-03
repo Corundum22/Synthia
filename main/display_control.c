@@ -19,6 +19,7 @@
 #include "freertos/semphr.h"
 #include "esp_system.h"
 #include "driver/gpio.h"
+#include "esp_timer.h"
 
 /* Littlevgl specific */
 #ifdef LV_LVGL_H_INCLUDE_SIMPLE
@@ -28,6 +29,8 @@
 #endif
 
 #include "lvgl_helpers.h"
+
+#define CONFIG_LV_TFT_DISPLAY_MONOCHROME
 
 #ifndef CONFIG_LV_TFT_DISPLAY_MONOCHROME
     #if defined CONFIG_LV_USE_DEMO_WIDGETS
@@ -53,7 +56,7 @@
  *  STATIC PROTOTYPES
  **********************/
 static void lv_tick_task(void *arg);
-static void guiTask(void *pvParameter);
+void task_display(void *pvParameter);
 static void create_demo_application(void);
 
 
@@ -62,7 +65,7 @@ static void create_demo_application(void);
  * you should lock on the very same semaphore! */
 SemaphoreHandle_t xGuiSemaphore;
 
-static void task_display(void *pvParameter) {
+void task_display(void *pvParameter) {
 
     (void) pvParameter;
     xGuiSemaphore = xSemaphoreCreateMutex();
