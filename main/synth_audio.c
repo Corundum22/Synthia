@@ -5,36 +5,13 @@
 #include "waveform_tables.h"
 #include "uart_handler.h"
 #include "synth_audio.h"
+#include "note_handler.h"
 
 
-enum envelope_states_t {
-    nothing,
-    attack,
-    decay,
-    sustain,
-    release,
-} typedef envelope_states;
 
-
-struct note_data_t {
-    bool is_pressed;
-    envelope_states envelope_state;
-    uint_fast8_t note_num;
-} typedef note_data;
-
-
-note_data note_properties[NUM_VOICES] = {{
-    is_pressed: false,
-    envelope_state: nothing,
-    note_num: 0
-}};
-
-
-extern uint_fast8_t on_notes[];
 
 dac_oneshot_handle_t dac_handle;
 gptimer_handle_t wave_gen_timer;
-uint16_t current_note = 69;
 
 extern const uint32_t sin_array[];
 extern const uint32_t ratio_num[];
@@ -61,8 +38,8 @@ void task_audio_generate() {
         uint32_t data = 0;
         uint_fast8_t times_added = 0;
         for (int i = 0; i < NUM_VOICES; i++) {
-            if (on_notes[i] != 0) {
-                data += wave(on_notes[i], time);
+            if (note_properties[i].is_sounding == true) {
+                data += wave(note_properties[i].note_num, time) / note_properties[i].divisor;
                 times_added++;
             }
         }
@@ -72,7 +49,7 @@ void task_audio_generate() {
     }
 }
 
-void timer_init() {
+void wave_timer_init() {
     // wave_gen_timer init
     gptimer_config_t wave_gen_timer_config = {
         .clk_src = GPTIMER_CLK_SRC_APB,

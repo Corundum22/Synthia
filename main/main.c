@@ -11,6 +11,7 @@
 #include "basic_io.h"
 #include "uart_handler.h"
 #include "display_control.h"
+#include "note_handler.h"
 
 
 TaskHandle_t audio_task_handle;
@@ -28,8 +29,11 @@ static void task_create() {
 }
 
 static void exec_init() {
-    timer_init();
-    printf("Timer init finished\n");
+    wave_timer_init();
+    printf("Wave timer init finished\n");
+
+    envelope_timer_init();
+    printf("Envelope timer init finished\n");
 
     dac_init();
     printf("DAC init finished\n");

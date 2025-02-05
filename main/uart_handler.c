@@ -6,6 +6,8 @@
 #include "driver/uart.h"
 #include "freertos/queue.h"
 #include "uart_handler.h"
+#include "synth_audio.h"
+#include "note_handler.h"
 
 
 enum midi_event {
@@ -17,40 +19,14 @@ enum midi_event {
 };
 
 
-uint_fast8_t on_notes[NUM_VOICES] = {0};
 enum midi_event current_midi_event = waiting;
 uint_fast8_t channel_num = 0;
 uint_fast8_t velocity = 0;
 uint_fast8_t key_num = 0;
 
+extern note_data note_properties[];
+
 QueueHandle_t midi_uart_queue;
-
-
-static void set_on_note(uint_fast8_t key_num) {
-    for (int i = 0; i < NUM_VOICES; i++) {
-        if (on_notes[i] == key_num) {
-            return; // return without doing anything if the key is already pressed
-                    // i.e. no unison keys
-        }
-    }
-    for (int i = 0; i < NUM_VOICES; i++) {
-        if (on_notes[i] == 0) {
-            on_notes[i] = key_num;
-            printf("Note set\n\n");
-            return;
-        }
-    }
-}
-
-static void unset_on_note(uint_fast8_t key_num) {
-    for (int i = 0; i < NUM_VOICES; i++) {
-        if (on_notes[i] == key_num) {
-            on_notes[i] = 0;
-            printf("Note unset\n\n");
-            return;
-        }
-    }
-}
 
 
 void uart_init() {
@@ -122,14 +98,14 @@ void task_midi_uart(void *pvParameters) {
                                 printf("in on velocity\n\n");
                                 velocity = dtmp[i];
                                 current_midi_event = waiting;
-                                set_on_note(key_num);
+                                set_keypress(key_num);
                                 break;
                             
                             case note_off_velocity:
                                 printf("in off velocity\n\n");
                                 velocity = dtmp[i];
                                 current_midi_event = waiting;
-                                unset_on_note(key_num);
+                                set_keyrelease(key_num);
                                 break;
                         }
                     }

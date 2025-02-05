@@ -13,11 +13,6 @@
 #define NOTE_OFF                (0b000 << 4)
 #define STATUS_BIT              0b10000000
 
-#define NUM_VOICES              8
-
-
-extern uint_fast8_t on_notes[8];
-
 
 void uart_init();
 

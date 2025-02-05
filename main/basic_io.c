@@ -11,6 +11,8 @@
 #include "esp_err.h"
 #include "basic_io.h"
 #include "uart_handler.h"
+#include "synth_audio.h"
+#include "note_handler.h"
 
 
 const static char *TAG = "BASIC IO";
@@ -39,7 +41,7 @@ bool do_pot_4_calibration;
 bool do_vol_pot_calibration;
 bool do_low_pass_calibration;
 
-extern uint_fast8_t on_notes[];
+extern note_data note_properties[];
 
 
 static bool adc_calibration_init(adc_unit_t unit, adc_channel_t channel, adc_atten_t atten, adc_cali_handle_t *out_handle) {
@@ -217,7 +219,7 @@ void gpio_interrupt_handler(void *args) {
     int gpio_num = (int) args;
     switch (gpio_num) {
         case MIDI_PANIC_BUTTON:
-            for (int i = 0; i < NUM_VOICES; i++) on_notes[i] = 0;
+            for (int i = 0; i < NUM_VOICES; i++) note_properties[i].is_sounding = false;
             ESP_ERROR_CHECK(ledc_set_duty(LEDC_MODE, LEDC_CHANNEL, 0b00111111));
             ESP_ERROR_CHECK(ledc_update_duty(LEDC_MODE, LEDC_CHANNEL));
             break;
