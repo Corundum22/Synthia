@@ -8,7 +8,17 @@
 #include "uart_handler.h"
 
 
+enum midi_event {
+    waiting,
+    note_on_key_num,
+    note_on_velocity,
+    note_off_key_num,
+    note_off_velocity,
+};
+
+
 uint_fast8_t on_notes[NUM_VOICES] = {0};
+enum midi_event current_midi_event = waiting;
 
 QueueHandle_t midi_uart_queue;
 
@@ -70,29 +80,44 @@ void task_midi_uart(void *pvParameters) {
                     uint_fast8_t channel_num = 0;
                     uint_fast8_t velocity = 0;
                     uint_fast8_t key_num = 0;
-                    for (int i = 0; dtmp[i] != 0; i++) {
-                        if (dtmp[i] & 0b10000000) {
-                            channel_num = dtmp[i] & 0b00001111;
+                    for (int i = 0; i < event.size; i++) {
 
-                            switch (dtmp[i] & 0b01110000) {
-                                case NOTE_ON:
-                                    i++;
-                                    key_num = dtmp[i];
-                                    i++;
-                                    velocity = dtmp[i];
-                                    set_on_note(key_num);
-                                    printf("Note on received!\n");
-                                    break;
-                                case NOTE_OFF:
-                                    i++;
-                                    key_num = dtmp[i];
-                                    i++;
-                                    unset_on_note(key_num);
-                                    printf("Note off received!\n");
-                                    break;
-                                default:
-                                    break;
-                            }
+                        switch (current_midi_event) {
+                            case waiting:
+
+                                switch (dtmp[i] & 0b11110000) {
+                                    case (NOTE_ON | STATUS_BIT):
+                                        current_midi_event = note_on_key_num;
+                                        break;
+                                    case (NOTE_OFF | STATUS_BIT):
+                                        current_midi_event = note_off_key_num;
+                                        break;
+                                    default:
+                                        break;
+                                }
+                                break;
+
+                            case note_on_key_num:
+                                key_num = dtmp[i];
+                                current_midi_event = note_on_velocity;
+                                break;
+
+                            case note_off_key_num:
+                                key_num = dtmp[i];
+                                current_midi_event = note_off_velocity;
+                                break;
+
+                            case note_on_velocity:
+                                velocity = dtmp[i];
+                                current_midi_event = waiting;
+                                set_on_note(key_num);
+                                break;
+                            
+                            case note_off_velocity:
+                                velocity = dtmp[i];
+                                current_midi_event = waiting;
+                                unset_on_note(key_num);
+                                break;
                         }
                     }
 

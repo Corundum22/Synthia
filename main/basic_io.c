@@ -17,10 +17,10 @@ const static char *TAG = "BASIC IO";
 
 uint_fast8_t menu_select = 0;
 
-uint_fast16_t sin_volume = 0;
-uint_fast16_t sin_1 = 0;
-uint_fast16_t sin_2 = 0;
-uint_fast16_t sin_3 = 0;
+uint_fast16_t wave_1_vol = 0;
+uint_fast16_t wave_1_type = 0;
+uint_fast16_t wave_1_harm = 0;
+uint_fast16_t wave_1_detune = 0;
 
 adc_channel_t current_channel = MENU_POT_1;
 adc_oneshot_unit_handle_t menu_adc_handle;
@@ -139,7 +139,7 @@ void task_adc() {
                 if (do_low_pass_calibration)
                     ESP_ERROR_CHECK(adc_cali_raw_to_voltage(menu_low_pass_cali_handle, adc_result, &adc_result));
                 pot_low_pass = adc_result;
-                printf("%06u %06u %06u %06u\r", sin_volume, sin_1, sin_2, sin_3); // TODO: remove line later
+                printf("%06u %06u %06u %06u\r", wave_1_vol, wave_1_type, wave_1_harm, wave_1_detune); // TODO: remove line later
                 current_channel = MENU_POT_1;
                 break;
             default:
@@ -149,10 +149,10 @@ void task_adc() {
 
         switch (menu_select) {
             case 0:
-                sin_volume = pot_1;
-                sin_1 = pot_2;
-                sin_2 = pot_3;
-                sin_3 = pot_4;
+                wave_1_vol = pot_1;
+                wave_1_type = pot_2;
+                wave_1_harm = pot_3;
+                wave_1_detune = pot_4;
                 break;
             default:
                 break;

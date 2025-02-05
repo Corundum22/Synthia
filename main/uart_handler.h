@@ -11,6 +11,7 @@
 
 #define NOTE_ON                 (0b001 << 4)
 #define NOTE_OFF                (0b000 << 4)
+#define STATUS_BIT              0b10000000
 
 #define NUM_VOICES              8
 
