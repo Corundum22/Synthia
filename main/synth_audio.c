@@ -7,6 +7,29 @@
 #include "synth_audio.h"
 
 
+enum envelope_states_t {
+    nothing,
+    attack,
+    decay,
+    sustain,
+    release,
+} typedef envelope_states;
+
+
+struct note_data_t {
+    bool is_pressed;
+    envelope_states envelope_state;
+    uint_fast8_t note_num;
+} typedef note_data;
+
+
+note_data note_properties[NUM_VOICES] = {{
+    is_pressed: false,
+    envelope_state: nothing,
+    note_num: 0
+}};
+
+
 extern uint_fast8_t on_notes[];
 
 dac_oneshot_handle_t dac_handle;
