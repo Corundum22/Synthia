@@ -3,13 +3,11 @@ from fractions import Fraction
 
 MAX_LINE_LEN = 60
 NUM_VALUES = 256
-STARTING_LINE = "uint32_t ratio_num_denom[] = { "
+STARTING_LINE = "uint32_t sin_array[] = { "
 LEFT_SPACES = 4
 
 def func_to_apply(x):
-    #return int(127.5 * (1 + sin(2 * pi * x / NUM_VALUES)))
-    if (x < 128) return 256;
-    else return 0;
+    return int((2**16 / 2) * (1 + sin(2 * pi * x / NUM_VALUES)))
 #def func_to_apply(x):
 #    if (x < 128):
 #        current_freq = 440 * 2**((x - 69) / 12)

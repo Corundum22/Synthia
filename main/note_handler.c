@@ -3,14 +3,20 @@
 #include "note_handler.h"
 #include "esp_err.h"
 #include "esp_timer.h"
+#include "basic_io.h"
 
+
+extern uint_fast16_t attack_val;
+extern uint_fast16_t decay_val;
+extern uint_fast16_t sustain_val;
+extern uint_fast16_t release_val;
 
 note_data note_properties[NUM_VOICES] = {{
     is_pressed: false,
     is_sounding: false,
     envelope_state: nothing,
     note_num: 0,
-    divisor: 1,
+    multiplier: MAX_ENVELOPE_VAL,
 }};
 
 esp_timer_handle_t envelope_timer_handle;
@@ -42,6 +48,7 @@ void set_keyrelease(uint_fast8_t key_num) {
     for (int i = 0; i < NUM_VOICES; i++) {
         if (note_properties[i].note_num == key_num && note_properties[i].is_pressed == true) {
             note_properties[i].is_pressed = false;
+            note_properties[i].envelope_state = release;
         }
     }
 }
@@ -52,15 +59,33 @@ void envelope_timer_callback() {
             case sustain:
                 // The note is divided by the smallest possible number,
                 // making the output signal the loudest it can be
-                note_properties[i].divisor = MIN_ENVELOPE_VAL;
+                note_properties[i].multiplier = MAX_ENVELOPE_VAL;
                 break;
             case attack:
+                note_properties[i].multiplier += attack_val;
+                if (note_properties[i].multiplier >= MAX_ENVELOPE_VAL) {
+                    note_properties[i].multiplier = MAX_ENVELOPE_VAL;
+                    note_properties[i].envelope_state = decay;
+                }
                 break;
             case decay:
+                note_properties[i].multiplier -= decay_val;
+                if (((int) note_properties[i].multiplier) <= DECAY_LEVEL) {
+                    note_properties[i].multiplier = DECAY_LEVEL;
+                    note_properties[i].envelope_state = sustain;
+                }
                 break;
             case release:
+                note_properties[i].multiplier -= release_val;
+                if (note_properties[i].multiplier > MAX_ENVELOPE_VAL) {
+                    note_properties[i].multiplier = MIN_ENVELOPE_VAL;
+                    note_properties[i].is_sounding = false;
+                    note_properties[i].envelope_state = nothing;
+                }
                 break;
             default:
+                note_properties[i].envelope_state = nothing;
+                note_properties[i].is_sounding = false;
                 break;
         }
     }

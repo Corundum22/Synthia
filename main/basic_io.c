@@ -1,6 +1,7 @@
 #include <string.h>
 #include <stdint.h>
 #include <stdio.h>
+#include <stdbool.h>
 #include "freertos/FreeRTOS.h"
 #include "driver/gpio.h"
 #include "driver/ledc.h"
@@ -17,32 +18,69 @@
 
 const static char *TAG = "BASIC IO";
 
-uint_fast8_t menu_select = 0;
+uint_fast16_t menu_select = 0;
+uint_fast16_t low_pass = DEFAULT_LOW_PASS_VAL;
 
-uint_fast16_t wave_1_vol = 0;
-uint_fast16_t wave_1_type = 0;
-uint_fast16_t wave_1_harm = 0;
-uint_fast16_t wave_1_detune = 0;
+uint_fast16_t attack_val = DEFAULT_ENVELOPE_VALS;
+uint_fast16_t decay_val = DEFAULT_ENVELOPE_VALS;
+uint_fast16_t sustain_val = DEFAULT_ENVELOPE_VALS;
+uint_fast16_t release_val = DEFAULT_ENVELOPE_VALS;
 
-adc_channel_t current_channel = MENU_POT_1;
-adc_oneshot_unit_handle_t menu_adc_handle;
+static adc_channel_t current_channel = MENU_POT_1;
+static adc_oneshot_unit_handle_t menu_adc_handle;
     
+// Calibration handles
 static adc_cali_handle_t menu_pot_1_cali_handle = NULL;
 static adc_cali_handle_t menu_pot_2_cali_handle = NULL;
 static adc_cali_handle_t menu_pot_3_cali_handle = NULL;
 static adc_cali_handle_t menu_pot_4_cali_handle = NULL;
-static adc_cali_handle_t menu_vol_pot_cali_handle = NULL;
 static adc_cali_handle_t menu_low_pass_cali_handle = NULL;
+static adc_cali_handle_t menu_select_cali_handle = NULL;
 
-bool do_pot_1_calibration;
-bool do_pot_2_calibration;
-bool do_pot_3_calibration;
-bool do_pot_4_calibration;
-bool do_vol_pot_calibration;
-bool do_low_pass_calibration;
+// Calibration functions
+static bool do_pot_1_calibration;
+static bool do_pot_2_calibration;
+static bool do_pot_3_calibration;
+static bool do_pot_4_calibration;
+static bool do_low_pass_calibration;
+static bool do_select_calibration;
+
+// 2-bit (4 state) values that store the last read state of
+// each rotary encoder
+static uint_fast8_t pot_1_last_rotary;
+static uint_fast8_t pot_2_last_rotary;
+static uint_fast8_t pot_3_last_rotary;
+static uint_fast8_t pot_4_last_rotary;
+static uint_fast8_t low_pass_last_rotary;
+static uint_fast8_t select_last_rotary;
 
 extern note_data note_properties[];
 
+
+static int32_t rotary_encoder_interpret(uint_fast32_t mv_voltage, uint_fast8_t* last_state_ptr) {
+    uint_fast8_t new_state;
+    if (mv_voltage > 2475) {
+        new_state = 3;
+    } else if (mv_voltage > 1650) {
+        new_state = 2;
+    } else if (mv_voltage > 825) {
+        new_state = 1;
+    } else {
+        new_state = 0;
+    }
+
+    // Check if rotary encoder has gone counterclockwise
+    if (new_state == ((*last_state_ptr - 1) & 0b11)) {
+        *last_state_ptr = (*last_state_ptr - 1) & 0b11;
+        return -1;
+    }
+    // Check if rotary encoder has gone clockwise
+    else if (new_state == ((*last_state_ptr + 1) & 0b11)) {
+        *last_state_ptr = (*last_state_ptr + 1) & 0b11;
+        return 1;
+    }
+    return 0;
+}
 
 static bool adc_calibration_init(adc_unit_t unit, adc_channel_t channel, adc_atten_t atten, adc_cali_handle_t *out_handle) {
     adc_cali_handle_t handle = NULL;
@@ -95,14 +133,15 @@ static bool adc_calibration_init(adc_unit_t unit, adc_channel_t channel, adc_att
 
 void task_adc() {
 
-    uint32_t pot_1 = 0;
-    uint32_t pot_2 = 0;
-    uint32_t pot_3 = 0;
-    uint32_t pot_4 = 0;
-    uint32_t pot_vol = 0;
-    uint32_t pot_low_pass = 0;
 
     while (1) {
+        int32_t pot_1_delta = 0;
+        int32_t pot_2_delta = 0;
+        int32_t pot_3_delta = 0;
+        int32_t pot_4_delta = 0;
+        int32_t pot_low_pass_delta = 0;
+        int32_t pot_select_delta = 0;
+        
         int adc_result = 0;
         ESP_ERROR_CHECK(adc_oneshot_read(menu_adc_handle, current_channel, &adc_result));
 
@@ -110,55 +149,55 @@ void task_adc() {
             case MENU_POT_1:
                 if (do_pot_1_calibration)
                     ESP_ERROR_CHECK(adc_cali_raw_to_voltage(menu_pot_1_cali_handle, adc_result, &adc_result));
-                pot_1 = adc_result;
+                pot_1_delta = rotary_encoder_interpret(adc_result, &pot_1_last_rotary);
                 current_channel = MENU_POT_2;
                 break;
             case MENU_POT_2:
                 if (do_pot_2_calibration)
                     ESP_ERROR_CHECK(adc_cali_raw_to_voltage(menu_pot_2_cali_handle, adc_result, &adc_result));
-                pot_2 = adc_result;
+                pot_1_delta = rotary_encoder_interpret(adc_result, &pot_2_last_rotary);
                 current_channel = MENU_POT_3;
                 break;
             case MENU_POT_3:
                 if (do_pot_3_calibration)
                     ESP_ERROR_CHECK(adc_cali_raw_to_voltage(menu_pot_3_cali_handle, adc_result, &adc_result));
-                pot_3 = adc_result;
+                pot_1_delta = rotary_encoder_interpret(adc_result, &pot_3_last_rotary);
                 current_channel = MENU_POT_4;
                 break;
             case MENU_POT_4:
                 if (do_pot_4_calibration)
                     ESP_ERROR_CHECK(adc_cali_raw_to_voltage(menu_pot_4_cali_handle, adc_result, &adc_result));
-                pot_4 = adc_result;
-                current_channel = VOL_POT;
-                break;
-            case VOL_POT:
-                if (do_vol_pot_calibration)
-                    ESP_ERROR_CHECK(adc_cali_raw_to_voltage(menu_vol_pot_cali_handle, adc_result, &adc_result));
-                pot_vol = adc_result;
+                pot_1_delta = rotary_encoder_interpret(adc_result, &pot_4_last_rotary);
                 current_channel = LOW_PASS_POT;
                 break;
             case LOW_PASS_POT:
                 if (do_low_pass_calibration)
                     ESP_ERROR_CHECK(adc_cali_raw_to_voltage(menu_low_pass_cali_handle, adc_result, &adc_result));
-                pot_low_pass = adc_result;
-                printf("%06u %06u %06u %06u\r", wave_1_vol, wave_1_type, wave_1_harm, wave_1_detune); // TODO: remove line later
-                current_channel = MENU_POT_1;
+                pot_1_delta = rotary_encoder_interpret(adc_result, &low_pass_last_rotary);
+                current_channel = SELECT_POT;
                 break;
+            case SELECT_POT:
+                if (do_select_calibration)
+                    ESP_ERROR_CHECK(adc_cali_raw_to_voltage(menu_select_cali_handle, adc_result, &adc_result));
+                pot_1_delta = rotary_encoder_interpret(adc_result, &select_last_rotary);
+                switch (menu_select) {
+                    case 0:
+                        attack_val += pot_1_delta;
+                        decay_val += pot_2_delta;
+                        sustain_val += pot_3_delta;
+                        release_val += pot_4_delta;
+                        break;
+                    default:
+                        break;
+                }
+                current_channel = MENU_POT_1;
+                printf("%06u %06u %06u %06u\r", attack, decay, sustain, release); // TODO: remove line later
+                        break;
             default:
                 current_channel = MENU_POT_1;
                 break;
         }
 
-        switch (menu_select) {
-            case 0:
-                wave_1_vol = pot_1;
-                wave_1_type = pot_2;
-                wave_1_harm = pot_3;
-                wave_1_detune = pot_4;
-                break;
-            default:
-                break;
-        }
 
         vTaskDelay(pdMS_TO_TICKS(50));
     }
@@ -178,15 +217,15 @@ void adc_init() {
     ESP_ERROR_CHECK(adc_oneshot_config_channel(menu_adc_handle, MENU_POT_2, &menu_channel_config));
     ESP_ERROR_CHECK(adc_oneshot_config_channel(menu_adc_handle, MENU_POT_3, &menu_channel_config));
     ESP_ERROR_CHECK(adc_oneshot_config_channel(menu_adc_handle, MENU_POT_4, &menu_channel_config));
-    ESP_ERROR_CHECK(adc_oneshot_config_channel(menu_adc_handle, VOL_POT, &menu_channel_config));
     ESP_ERROR_CHECK(adc_oneshot_config_channel(menu_adc_handle, LOW_PASS_POT, &menu_channel_config));
+    ESP_ERROR_CHECK(adc_oneshot_config_channel(menu_adc_handle, SELECT_POT, &menu_channel_config));
 
     do_pot_1_calibration = adc_calibration_init(MENU_UNIT, MENU_POT_1, MENU_ATTEN, &menu_pot_1_cali_handle);
     do_pot_2_calibration = adc_calibration_init(MENU_UNIT, MENU_POT_2, MENU_ATTEN, &menu_pot_2_cali_handle);
     do_pot_3_calibration = adc_calibration_init(MENU_UNIT, MENU_POT_3, MENU_ATTEN, &menu_pot_3_cali_handle);
     do_pot_4_calibration = adc_calibration_init(MENU_UNIT, MENU_POT_4, MENU_ATTEN, &menu_pot_4_cali_handle);
-    do_vol_pot_calibration = adc_calibration_init(MENU_UNIT, VOL_POT, MENU_ATTEN, &menu_vol_pot_cali_handle);
     do_low_pass_calibration = adc_calibration_init(MENU_UNIT, LOW_PASS_POT, MENU_ATTEN, &menu_low_pass_cali_handle);
+    do_select_calibration = adc_calibration_init(MENU_UNIT, SELECT_POT, MENU_ATTEN, &menu_select_cali_handle);
 }
 
 
@@ -201,17 +240,53 @@ void ledc_init() {
 
     ESP_ERROR_CHECK(ledc_timer_config(&ledc_timer_conf));
 
-    ledc_channel_config_t ledc_channel_conf = {
+    // Configure status led (gpio 2) which is built into esp32 board
+    ledc_channel_config_t status_ledc_channel_conf = {
         .speed_mode = LEDC_MODE,
-        .channel = LEDC_CHANNEL,
+        .channel = STATUS_LEDC_CHANNEL,
         .timer_sel = LEDC_TIMER,
         .intr_type = LEDC_INTR_DISABLE,
-        .gpio_num = 2,
+        .gpio_num = STATUS_LEDC,
         .duty = 0,
         .hpoint = 0,
     };
+    ESP_ERROR_CHECK(ledc_channel_config(&status_ledc_channel_conf));
 
-    ESP_ERROR_CHECK(ledc_channel_config(&ledc_channel_conf));
+    // Configure low-pass pwm control
+    ledc_channel_config_t low_pass_ledc_channel_conf = {
+        .speed_mode = LEDC_MODE,
+        .channel = LOW_PASS_LEDC_CHANNEL,
+        .timer_sel = LEDC_TIMER,
+        .intr_type = LEDC_INTR_DISABLE,
+        .gpio_num = LOW_PASS_LEDC,
+        .duty = 0,
+        .hpoint = 0,
+    };
+    ESP_ERROR_CHECK(ledc_channel_config(&low_pass_ledc_channel_conf));
+
+    // Configure high-pass pwm control
+    ledc_channel_config_t high_pass_ledc_channel_conf = {
+        .speed_mode = LEDC_MODE,
+        .channel = HIGH_PASS_LEDC_CHANNEL,
+        .timer_sel = LEDC_TIMER,
+        .intr_type = LEDC_INTR_DISABLE,
+        .gpio_num = HIGH_PASS_LEDC,
+        .duty = 0,
+        .hpoint = 0,
+    };
+    ESP_ERROR_CHECK(ledc_channel_config(&high_pass_ledc_channel_conf));
+    
+    // Configure distortion pwm control
+    ledc_channel_config_t distortion_ledc_channel_conf = {
+        .speed_mode = LEDC_MODE,
+        .channel = DISTORTION_LEDC_CHANNEL,
+        .timer_sel = LEDC_TIMER,
+        .intr_type = LEDC_INTR_DISABLE,
+        .gpio_num = DISTORTION_LEDC,
+        .duty = 0,
+        .hpoint = 0,
+    };
+    ESP_ERROR_CHECK(ledc_channel_config(&distortion_ledc_channel_conf));
 }
 
 
@@ -220,8 +295,8 @@ void gpio_interrupt_handler(void *args) {
     switch (gpio_num) {
         case MIDI_PANIC_BUTTON:
             for (int i = 0; i < NUM_VOICES; i++) note_properties[i].is_sounding = false;
-            ESP_ERROR_CHECK(ledc_set_duty(LEDC_MODE, LEDC_CHANNEL, 0b00111111));
-            ESP_ERROR_CHECK(ledc_update_duty(LEDC_MODE, LEDC_CHANNEL));
+            ESP_ERROR_CHECK(ledc_set_duty(LEDC_MODE, STATUS_LEDC_CHANNEL, 0b00111111));
+            ESP_ERROR_CHECK(ledc_update_duty(LEDC_MODE, STATUS_LEDC_CHANNEL));
             break;
     }
 

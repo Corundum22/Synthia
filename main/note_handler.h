@@ -11,7 +11,9 @@
 #define MAX_ENVELOPE_VAL    0xFF
 #define MIN_ENVELOPE_VAL    0x01
 
-#define ENVELOPE_DELTA      10
+#define DECAY_LEVEL         170
+
+#define MULTIPLIER_WIDTH    8
 
 
 enum envelope_states_t {
@@ -27,7 +29,7 @@ struct note_data_t {
     bool is_sounding;
     envelope_states envelope_state;
     uint_fast8_t note_num;
-    int_fast32_t divisor;
+    int_fast16_t multiplier;
 } typedef note_data;
 
 extern note_data note_properties[NUM_VOICES];
