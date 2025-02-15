@@ -29,20 +29,28 @@
 #define SELECT_POT    ADC_CHANNEL_5 // gpio33
 
 #define MENU_ATTEN    ADC_ATTEN_DB_12
-#define MENU_UNIT     ADC_BITWIDTH_11
-#define MENU_BITS     ADC_UNIT_1
+#define MENU_BITS     ADC_BITWIDTH_11
+#define MENU_UNIT     ADC_UNIT_1
 #define DEFAULT_VREF  1100
 
 #define CHOSEN_ADC_CALI_SCHEME    ESP_ADC_CAL_VAL_EFUSE_VREF
 
-#define DEFAULT_ENVELOPE_VALS    100
-#define DEFAULT_LOW_PASS_VAL     100
+#define DEFAULT_ENVELOPE_VALS    3
+#define DEFAULT_LOW_PASS_VAL     3
+
+#define ANALOG_READ_LOOP_MS      5
+
+#define ROTARY_HIGH_MIN          2900
+#define ROTARY_DELTA             200
+#define ROTARY_MIDHIGH_TARGET    2200
+#define ROTARY_MIDLOW_TARGET     1089
+#define ROTARY_LOW_MAX           700
 
 
-extern uint_fast16_t attack_val;
-extern uint_fast16_t decay_val;
-extern uint_fast16_t sustain_val;
-extern uint_fast16_t release_val;
+extern int_fast16_t attack_val;
+extern int_fast16_t decay_val;
+extern int_fast16_t sustain_val;
+extern int_fast16_t release_val;
 
 
 void task_adc();

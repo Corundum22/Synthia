@@ -16,15 +16,16 @@
 #include "note_handler.h"
 
 
+
 const static char *TAG = "BASIC IO";
 
 uint_fast16_t menu_select = 0;
 uint_fast16_t low_pass = DEFAULT_LOW_PASS_VAL;
 
-uint_fast16_t attack_val = DEFAULT_ENVELOPE_VALS;
-uint_fast16_t decay_val = DEFAULT_ENVELOPE_VALS;
-uint_fast16_t sustain_val = DEFAULT_ENVELOPE_VALS;
-uint_fast16_t release_val = DEFAULT_ENVELOPE_VALS;
+int_fast16_t attack_val = DEFAULT_ENVELOPE_VALS;
+int_fast16_t decay_val = DEFAULT_ENVELOPE_VALS;
+int_fast16_t sustain_val = DEFAULT_ENVELOPE_VALS;
+int_fast16_t release_val = DEFAULT_ENVELOPE_VALS;
 
 static adc_channel_t current_channel = MENU_POT_1;
 static adc_oneshot_unit_handle_t menu_adc_handle;
@@ -45,40 +46,86 @@ static bool do_pot_4_calibration;
 static bool do_low_pass_calibration;
 static bool do_select_calibration;
 
-// 2-bit (4 state) values that store the last read state of
-// each rotary encoder
-static uint_fast8_t pot_1_last_rotary;
-static uint_fast8_t pot_2_last_rotary;
-static uint_fast8_t pot_3_last_rotary;
-static uint_fast8_t pot_4_last_rotary;
-static uint_fast8_t low_pass_last_rotary;
-static uint_fast8_t select_last_rotary;
-
 extern note_data note_properties[];
 
+uint_fast16_t last_result = 0;
 
-static int32_t rotary_encoder_interpret(uint_fast32_t mv_voltage, uint_fast8_t* last_state_ptr) {
-    uint_fast8_t new_state;
-    if (mv_voltage > 2475) {
-        new_state = 3;
-    } else if (mv_voltage > 1650) {
-        new_state = 2;
-    } else if (mv_voltage > 825) {
-        new_state = 1;
-    } else {
-        new_state = 0;
-    }
+enum rotary_states_t {
+    rwait,
+    rcounter1,
+    rcounter2,
+    rcounter3,
+    rforward1,
+    rforward2,
+    rforward3,
+} typedef rotary_states;
 
-    // Check if rotary encoder has gone counterclockwise
-    if (new_state == ((*last_state_ptr - 1) & 0b11)) {
-        *last_state_ptr = (*last_state_ptr - 1) & 0b11;
-        return -1;
+// 2-bit (4 state) values that store the last read state of
+// each rotary encoder
+static rotary_states pot_1_last_rotary = rwait;
+static rotary_states pot_2_last_rotary = rwait;
+static rotary_states pot_3_last_rotary = rwait;
+static rotary_states pot_4_last_rotary = rwait;
+static rotary_states low_pass_last_rotary = rwait;
+static rotary_states select_last_rotary = rwait;
+
+
+static int32_t rotary_encoder_interpret(uint_fast32_t mv_voltage, rotary_states* state) {
+    switch (*state) {
+        case rwait:
+            if (mv_voltage > ROTARY_LOW_MAX) {
+                if (mv_voltage < ROTARY_MIDLOW_TARGET + ROTARY_DELTA) {
+                    //printf("to rforward1\n");
+                    *state = rforward1;
+                }
+                else if (mv_voltage < ROTARY_MIDHIGH_TARGET + ROTARY_DELTA) {
+                    //printf("to rcounter1\n");
+                    *state = rcounter1;
+                }
+            }
+            goto interpret_end;
+        case rcounter1:
+            if (mv_voltage < ROTARY_LOW_MAX) {
+                //printf("to rcounter2\n");
+                *state = rcounter2;
+            }
+            goto interpret_end;
+        case rcounter2:
+            if (mv_voltage > ROTARY_MIDLOW_TARGET - ROTARY_DELTA) {
+                //printf("to rcounter3\n");
+                *state = rcounter3;
+                return -1;
+            }
+            goto interpret_end;
+        case rcounter3:
+            if (mv_voltage > ROTARY_HIGH_MIN) {
+                //printf("to rwait\n");
+                *state = rwait;
+            }
+            goto interpret_end;
+        case rforward1:
+            if (mv_voltage < ROTARY_LOW_MAX) {
+                //printf("to rforward2\n");
+                *state = rforward2;
+            }
+            goto interpret_end;
+        case rforward2:
+            if (mv_voltage > ROTARY_MIDLOW_TARGET - ROTARY_DELTA) {
+                //printf("to rforward3\n");
+                *state = rforward3;
+                return 1;
+            }
+            goto interpret_end;
+        case rforward3:
+            if (mv_voltage > ROTARY_HIGH_MIN) {
+                //printf("to rwait\n");
+                *state = rwait;
+            }
+            goto interpret_end;
+        default:
+            *state = rwait;
     }
-    // Check if rotary encoder has gone clockwise
-    else if (new_state == ((*last_state_ptr + 1) & 0b11)) {
-        *last_state_ptr = (*last_state_ptr + 1) & 0b11;
-        return 1;
-    }
+interpret_end:
     return 0;
 }
 
@@ -131,16 +178,18 @@ static bool adc_calibration_init(adc_unit_t unit, adc_channel_t channel, adc_att
 }
 
 
+// NOTE: always keep this directly before task_adc()
+// Save diagnostic stack
+#pragma GCC diagnostic push
+// Ignore maybe-unintialized variables, since
+// GCC complains about pot_1_delta, pot_2_delta, etc...
+#pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
+
 void task_adc() {
 
+    int32_t pot_1_delta, pot_2_delta, pot_3_delta, pot_4_delta, pot_low_pass_delta, pot_select_delta = 0;
 
     while (1) {
-        int32_t pot_1_delta = 0;
-        int32_t pot_2_delta = 0;
-        int32_t pot_3_delta = 0;
-        int32_t pot_4_delta = 0;
-        int32_t pot_low_pass_delta = 0;
-        int32_t pot_select_delta = 0;
         
         int adc_result = 0;
         ESP_ERROR_CHECK(adc_oneshot_read(menu_adc_handle, current_channel, &adc_result));
@@ -155,31 +204,31 @@ void task_adc() {
             case MENU_POT_2:
                 if (do_pot_2_calibration)
                     ESP_ERROR_CHECK(adc_cali_raw_to_voltage(menu_pot_2_cali_handle, adc_result, &adc_result));
-                pot_1_delta = rotary_encoder_interpret(adc_result, &pot_2_last_rotary);
+                pot_2_delta = rotary_encoder_interpret(adc_result, &pot_2_last_rotary);
                 current_channel = MENU_POT_3;
                 break;
             case MENU_POT_3:
                 if (do_pot_3_calibration)
                     ESP_ERROR_CHECK(adc_cali_raw_to_voltage(menu_pot_3_cali_handle, adc_result, &adc_result));
-                pot_1_delta = rotary_encoder_interpret(adc_result, &pot_3_last_rotary);
+                pot_3_delta = rotary_encoder_interpret(adc_result, &pot_3_last_rotary);
                 current_channel = MENU_POT_4;
                 break;
             case MENU_POT_4:
                 if (do_pot_4_calibration)
                     ESP_ERROR_CHECK(adc_cali_raw_to_voltage(menu_pot_4_cali_handle, adc_result, &adc_result));
-                pot_1_delta = rotary_encoder_interpret(adc_result, &pot_4_last_rotary);
+                pot_4_delta = rotary_encoder_interpret(adc_result, &pot_4_last_rotary);
                 current_channel = LOW_PASS_POT;
                 break;
             case LOW_PASS_POT:
                 if (do_low_pass_calibration)
                     ESP_ERROR_CHECK(adc_cali_raw_to_voltage(menu_low_pass_cali_handle, adc_result, &adc_result));
-                pot_1_delta = rotary_encoder_interpret(adc_result, &low_pass_last_rotary);
+                pot_low_pass_delta = rotary_encoder_interpret(adc_result, &low_pass_last_rotary);
                 current_channel = SELECT_POT;
                 break;
             case SELECT_POT:
                 if (do_select_calibration)
                     ESP_ERROR_CHECK(adc_cali_raw_to_voltage(menu_select_cali_handle, adc_result, &adc_result));
-                pot_1_delta = rotary_encoder_interpret(adc_result, &select_last_rotary);
+                pot_select_delta = rotary_encoder_interpret(adc_result, &select_last_rotary);
                 switch (menu_select) {
                     case 0:
                         attack_val += pot_1_delta;
@@ -190,16 +239,20 @@ void task_adc() {
                     default:
                         break;
                 }
+                /*if (last_result != attack_val) {
+                    printf("%d\n", attack_val);
+                }
+                last_result = attack_val;*/
+                pot_1_delta = pot_2_delta = pot_3_delta = pot_4_delta = pot_low_pass_delta = pot_select_delta = 0;
                 current_channel = MENU_POT_1;
-                printf("%06u %06u %06u %06u\r", attack, decay, sustain, release); // TODO: remove line later
-                        break;
+                break;
             default:
                 current_channel = MENU_POT_1;
                 break;
         }
 
 
-        vTaskDelay(pdMS_TO_TICKS(50));
+        vTaskDelay(pdMS_TO_TICKS(ANALOG_READ_LOOP_MS));
     }
 }
 
@@ -228,6 +281,9 @@ void adc_init() {
     do_select_calibration = adc_calibration_init(MENU_UNIT, SELECT_POT, MENU_ATTEN, &menu_select_cali_handle);
 }
 
+// Restore diagnostic stack
+// NOTE: always keep this directly after task_adc()
+#pragma GCC diagnostic pop
 
 void ledc_init() {
     ledc_timer_config_t ledc_timer_conf = {
@@ -314,3 +370,4 @@ void gpio_init() {
     gpio_install_isr_service(ESP_INTR_FLAG_DEFAULT);
     gpio_isr_handler_add(MIDI_PANIC_BUTTON, gpio_interrupt_handler, (void *) MIDI_PANIC_BUTTON);
 }
+

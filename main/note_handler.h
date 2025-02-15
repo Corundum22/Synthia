@@ -6,7 +6,7 @@
 #include <stdint.h>
 
 #define NUM_VOICES                    8
-#define ENVELOPE_TRIGGER_PERIOD_MS    50
+#define ENVELOPE_TRIGGER_PERIOD_US    10000
 
 #define MAX_ENVELOPE_VAL    0xFF
 #define MIN_ENVELOPE_VAL    0x01

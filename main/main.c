@@ -3,6 +3,7 @@
 #include <string.h>
 #include "esp_err.h"
 #include "freertos/FreeRTOS.h"
+#include "freertos/projdefs.h"
 #include "freertos/task.h"
 #include "esp_log.h"
 #include "driver/dac_oneshot.h"
