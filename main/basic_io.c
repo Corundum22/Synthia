@@ -19,15 +19,48 @@
 
 const static char *TAG = "BASIC IO";
 
-uint_fast16_t menu_select = 0;
-uint_fast16_t low_pass = DEFAULT_LOW_PASS_VAL;
+#define MAX_MENU_STATE_VAL 4
+enum menu_state_t {
+    madsr = 0,
+    mwave = 1,
+    msequencer_setup = 2,
+    msequencer_page_1 = 3,
+    msequencer_page_2 = 4,
+} typedef menu_state;
 
+// Always accessible values
+menu_state menu_select = madsr;
+int_fast16_t low_pass_val = DEFAULT_LOW_PASS_VAL;
+
+// ADSR menu values
 int_fast16_t attack_val = DEFAULT_ENVELOPE_VALS;
 int_fast16_t decay_val = DEFAULT_ENVELOPE_VALS;
 int_fast16_t sustain_val = DEFAULT_ENVELOPE_VALS;
 int_fast16_t release_val = DEFAULT_ENVELOPE_VALS;
 
+// Wave menu values
+int_fast16_t wave_select_val = 1;
+
+// Sequencer setup values
+int_fast16_t sequencer_enable_val = 0;
+int_fast16_t sequencer_clear_val = 0;
+
+// Sequencer page 1 note values
+int_fast16_t squ_note_1_val = 0;
+int_fast16_t squ_note_2_val = 0;
+int_fast16_t squ_note_3_val = 0;
+int_fast16_t squ_note_4_val = 0;
+
+// Sequencer page 2 note values
+int_fast16_t squ_note_5_val = 0;
+int_fast16_t squ_note_6_val = 0;
+int_fast16_t squ_note_7_val = 0;
+int_fast16_t squ_note_8_val = 0;
+
+
+// Current channel state
 static adc_channel_t current_channel = MENU_POT_1;
+// ADC handle
 static adc_oneshot_unit_handle_t menu_adc_handle;
     
 // Calibration handles
@@ -38,7 +71,7 @@ static adc_cali_handle_t menu_pot_4_cali_handle = NULL;
 static adc_cali_handle_t menu_low_pass_cali_handle = NULL;
 static adc_cali_handle_t menu_select_cali_handle = NULL;
 
-// Calibration functions
+// Calibration ready variables
 static bool do_pot_1_calibration;
 static bool do_pot_2_calibration;
 static bool do_pot_3_calibration;
@@ -48,9 +81,7 @@ static bool do_select_calibration;
 
 extern note_data note_properties[];
 
-uint_fast16_t last_result = 0;
-
-enum rotary_states_t {
+enum rotary_state_t {
     rwait,
     rcounter1,
     rcounter2,
@@ -58,136 +89,91 @@ enum rotary_states_t {
     rforward1,
     rforward2,
     rforward3,
-} typedef rotary_states;
+} typedef rotary_state;
 
-// 2-bit (4 state) values that store the last read state of
-// each rotary encoder
-static rotary_states pot_1_last_rotary = rwait;
-static rotary_states pot_2_last_rotary = rwait;
-static rotary_states pot_3_last_rotary = rwait;
-static rotary_states pot_4_last_rotary = rwait;
-static rotary_states low_pass_last_rotary = rwait;
-static rotary_states select_last_rotary = rwait;
+// Last states of every rotary encoder
+static rotary_state pot_1_last_rotary = rwait;
+static rotary_state pot_2_last_rotary = rwait;
+static rotary_state pot_3_last_rotary = rwait;
+static rotary_state pot_4_last_rotary = rwait;
+static rotary_state low_pass_last_rotary = rwait;
+static rotary_state select_last_rotary = rwait;
 
-
-static int32_t rotary_encoder_interpret(uint_fast32_t mv_voltage, rotary_states* state) {
-    switch (*state) {
-        case rwait:
-            if (mv_voltage > ROTARY_LOW_MAX) {
-                if (mv_voltage < ROTARY_MIDLOW_TARGET + ROTARY_DELTA) {
-                    //printf("to rforward1\n");
-                    *state = rforward1;
-                }
-                else if (mv_voltage < ROTARY_MIDHIGH_TARGET + ROTARY_DELTA) {
-                    //printf("to rcounter1\n");
-                    *state = rcounter1;
-                }
-            }
-            goto interpret_end;
-        case rcounter1:
-            if (mv_voltage < ROTARY_LOW_MAX) {
-                //printf("to rcounter2\n");
-                *state = rcounter2;
-            }
-            goto interpret_end;
-        case rcounter2:
-            if (mv_voltage > ROTARY_MIDLOW_TARGET - ROTARY_DELTA) {
-                //printf("to rcounter3\n");
-                *state = rcounter3;
-                return -1;
-            }
-            goto interpret_end;
-        case rcounter3:
-            if (mv_voltage > ROTARY_HIGH_MIN) {
-                //printf("to rwait\n");
-                *state = rwait;
-            }
-            goto interpret_end;
-        case rforward1:
-            if (mv_voltage < ROTARY_LOW_MAX) {
-                //printf("to rforward2\n");
-                *state = rforward2;
-            }
-            goto interpret_end;
-        case rforward2:
-            if (mv_voltage > ROTARY_MIDLOW_TARGET - ROTARY_DELTA) {
-                //printf("to rforward3\n");
-                *state = rforward3;
-                return 1;
-            }
-            goto interpret_end;
-        case rforward3:
-            if (mv_voltage > ROTARY_HIGH_MIN) {
-                //printf("to rwait\n");
-                *state = rwait;
-            }
-            goto interpret_end;
-        default:
-            *state = rwait;
-    }
-interpret_end:
-    return 0;
-}
-
-static bool adc_calibration_init(adc_unit_t unit, adc_channel_t channel, adc_atten_t atten, adc_cali_handle_t *out_handle) {
-    adc_cali_handle_t handle = NULL;
-    esp_err_t ret = ESP_FAIL;
-    bool calibrated = false;
-
-#if ADC_CALI_SCHEME_CURVE_FITTING_SUPPORTED
-    if (!calibrated) {
-        ESP_LOGI(TAG, "calibration scheme version is %s", "Curve Fitting");
-        adc_cali_curve_fitting_config_t cali_config = {
-            .unit_id = unit,
-            .chan = channel,
-            .atten = atten,
-            .bitwidth = MENU_BITS,
-        };
-        ret = adc_cali_create_scheme_curve_fitting(&cali_config, &handle);
-        if (ret == ESP_OK) {
-            calibrated = true;
-        }
-    }
-#endif
-
-#if ADC_CALI_SCHEME_LINE_FITTING_SUPPORTED
-    if (!calibrated) {
-        ESP_LOGI(TAG, "calibration scheme version is %s", "Line Fitting");
-        adc_cali_line_fitting_config_t cali_config = {
-            .unit_id = unit,
-            .atten = atten,
-            .bitwidth = MENU_BITS,
-        };
-        ret = adc_cali_create_scheme_line_fitting(&cali_config, &handle);
-        if (ret == ESP_OK) {
-            calibrated = true;
-        }
-    }
-#endif
-
-    *out_handle = handle;
-    if (ret == ESP_OK) {
-        ESP_LOGI(TAG, "Calibration Success");
-    } else if (ret == ESP_ERR_NOT_SUPPORTED || !calibrated) {
-        ESP_LOGW(TAG, "eFuse not burnt, skip software calibration");
-    } else {
-        ESP_LOGE(TAG, "Invalid arg or no memory");
-    }
-
-    return calibrated;
-}
+static int32_t rotary_encoder_interpret(uint_fast32_t mv_voltage, rotary_state* state);
+static bool adc_calibration_init(adc_unit_t unit, adc_channel_t channel, adc_atten_t atten, adc_cali_handle_t *out_handle);
 
 
-// NOTE: always keep this directly before task_adc()
 // Save diagnostic stack
 #pragma GCC diagnostic push
 // Ignore maybe-unintialized variables, since
 // GCC complains about pot_1_delta, pot_2_delta, etc...
 #pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
 
+
+// Saturation addition with user specified lower and upper bounds (both inclusive)
+static int saturation_add(int val_1, int val_2, int lower_bound, int upper_bound) {
+    int result = val_1 + val_2;
+    if (result < lower_bound) result = lower_bound;
+    else if (result > upper_bound) result = upper_bound;
+    return result;
+}
+
+static void apply_deltas(int* pot_1_delta, int* pot_2_delta, int* pot_3_delta, int* pot_4_delta, int* pot_low_pass_delta, int* pot_select_delta) {
+
+    menu_select = saturation_add(menu_select, *pot_select_delta, 0, MAX_MENU_STATE_VAL);
+    low_pass_val = saturation_add(low_pass_val, *pot_low_pass_delta, 0, 127);
+    switch (menu_select) {
+        case madsr:
+            attack_val = saturation_add(attack_val, *pot_1_delta, MIN_ENVELOPE_VAL, MAX_ENVELOPE_VAL);
+            decay_val = saturation_add(decay_val, *pot_2_delta, MIN_ENVELOPE_VAL, MAX_ENVELOPE_VAL);
+            sustain_val = saturation_add(sustain_val, *pot_3_delta, MIN_ENVELOPE_VAL, MAX_ENVELOPE_VAL);
+            release_val = saturation_add(release_val, *pot_4_delta, MIN_ENVELOPE_VAL, MAX_ENVELOPE_VAL);
+
+            break;
+        case mwave:
+            wave_select_val = saturation_add(wave_select_val, *pot_1_delta, 0, 3);
+
+            break;
+        case msequencer_setup:
+            sequencer_enable_val = saturation_add(sequencer_enable_val, *pot_1_delta, 0, 1);
+            sequencer_clear_val = saturation_add(sequencer_clear_val, *pot_2_delta, 0, 1);
+
+            break;
+        case msequencer_page_1:
+            squ_note_1_val = saturation_add(squ_note_1_val, *pot_1_delta, 0, 127);
+            squ_note_2_val = saturation_add(squ_note_2_val, *pot_2_delta, 0, 127);
+            squ_note_3_val = saturation_add(squ_note_3_val, *pot_3_delta, 0, 127);
+            squ_note_4_val = saturation_add(squ_note_4_val, *pot_4_delta, 0, 127);
+
+            break;
+        case msequencer_page_2:
+            squ_note_5_val = saturation_add(squ_note_5_val, *pot_1_delta, 0, 127);
+            squ_note_6_val = saturation_add(squ_note_6_val, *pot_2_delta, 0, 127);
+            squ_note_7_val = saturation_add(squ_note_7_val, *pot_3_delta, 0, 127);
+            squ_note_8_val = saturation_add(squ_note_8_val, *pot_4_delta, 0, 127);
+
+            break;
+        default:
+            menu_select = madsr;
+            break;
+    }
+
+    if (*pot_1_delta | *pot_2_delta | *pot_3_delta | *pot_4_delta | *pot_low_pass_delta | *pot_select_delta) {
+        printf("\033[2JAttack: %03d  Decay: %03d  Sustain: %03d  Release: %03d\nLow pass: %03d  Current menu: %03d\nWave type: %03d\nSequencer enable: %03d  Sequencer clear: %03d\nNote 1: %03d  Note 2: %03d  Note 3: %03d  Note 4: %03d\nNote 5: %03d  Note 6: %03d  Note 7: %03d  Note 8: %03d\n", attack_val, decay_val, sustain_val, release_val, low_pass_val, menu_select, wave_select_val, sequencer_enable_val, sequencer_clear_val, squ_note_1_val, squ_note_2_val, squ_note_3_val, squ_note_4_val, squ_note_5_val, squ_note_6_val, squ_note_7_val, squ_note_8_val);
+    }
+    
+    *pot_1_delta =
+        *pot_2_delta =
+        *pot_3_delta =
+        *pot_4_delta =
+        *pot_low_pass_delta =
+        *pot_select_delta =
+        0;
+}
+
 void task_adc() {
 
-    int32_t pot_1_delta, pot_2_delta, pot_3_delta, pot_4_delta, pot_low_pass_delta, pot_select_delta = 0;
+    int pot_1_delta, pot_2_delta, pot_3_delta, pot_4_delta, pot_low_pass_delta, pot_select_delta = 0;
 
     while (1) {
         
@@ -200,60 +186,118 @@ void task_adc() {
                     ESP_ERROR_CHECK(adc_cali_raw_to_voltage(menu_pot_1_cali_handle, adc_result, &adc_result));
                 pot_1_delta = rotary_encoder_interpret(adc_result, &pot_1_last_rotary);
                 current_channel = MENU_POT_2;
+
                 break;
             case MENU_POT_2:
                 if (do_pot_2_calibration)
                     ESP_ERROR_CHECK(adc_cali_raw_to_voltage(menu_pot_2_cali_handle, adc_result, &adc_result));
                 pot_2_delta = rotary_encoder_interpret(adc_result, &pot_2_last_rotary);
                 current_channel = MENU_POT_3;
+
                 break;
             case MENU_POT_3:
                 if (do_pot_3_calibration)
                     ESP_ERROR_CHECK(adc_cali_raw_to_voltage(menu_pot_3_cali_handle, adc_result, &adc_result));
                 pot_3_delta = rotary_encoder_interpret(adc_result, &pot_3_last_rotary);
                 current_channel = MENU_POT_4;
+
                 break;
             case MENU_POT_4:
                 if (do_pot_4_calibration)
                     ESP_ERROR_CHECK(adc_cali_raw_to_voltage(menu_pot_4_cali_handle, adc_result, &adc_result));
                 pot_4_delta = rotary_encoder_interpret(adc_result, &pot_4_last_rotary);
                 current_channel = LOW_PASS_POT;
+
                 break;
             case LOW_PASS_POT:
                 if (do_low_pass_calibration)
                     ESP_ERROR_CHECK(adc_cali_raw_to_voltage(menu_low_pass_cali_handle, adc_result, &adc_result));
                 pot_low_pass_delta = rotary_encoder_interpret(adc_result, &low_pass_last_rotary);
                 current_channel = SELECT_POT;
+
                 break;
             case SELECT_POT:
                 if (do_select_calibration)
                     ESP_ERROR_CHECK(adc_cali_raw_to_voltage(menu_select_cali_handle, adc_result, &adc_result));
                 pot_select_delta = rotary_encoder_interpret(adc_result, &select_last_rotary);
-                switch (menu_select) {
-                    case 0:
-                        attack_val += pot_1_delta;
-                        decay_val += pot_2_delta;
-                        sustain_val += pot_3_delta;
-                        release_val += pot_4_delta;
-                        break;
-                    default:
-                        break;
-                }
-                /*if (last_result != attack_val) {
-                    printf("%d\n", attack_val);
-                }
-                last_result = attack_val;*/
-                pot_1_delta = pot_2_delta = pot_3_delta = pot_4_delta = pot_low_pass_delta = pot_select_delta = 0;
                 current_channel = MENU_POT_1;
+                
+                apply_deltas(&pot_1_delta, &pot_2_delta, &pot_3_delta, &pot_4_delta, &pot_low_pass_delta, &pot_select_delta);
+
                 break;
             default:
                 current_channel = MENU_POT_1;
+
                 break;
         }
 
 
         vTaskDelay(pdMS_TO_TICKS(ANALOG_READ_LOOP_MS));
     }
+}
+
+void gpio_interrupt_handler(void *args) {
+    int gpio_num = (int) args;
+    switch (gpio_num) {
+        case MIDI_PANIC_BUTTON:
+            for (int i = 0; i < NUM_VOICES; i++) note_properties[i].is_sounding = false;
+            ESP_ERROR_CHECK(ledc_set_duty(LEDC_MODE, STATUS_LEDC_CHANNEL, 0b00111111));
+            ESP_ERROR_CHECK(ledc_update_duty(LEDC_MODE, STATUS_LEDC_CHANNEL));
+            break;
+    }
+
+}
+
+
+// Interpret rotary encoder value changes with tracked last state of target rotary encoder
+static int32_t rotary_encoder_interpret(uint_fast32_t mv_voltage, rotary_state* state) {
+    switch (*state) {
+        case rwait:
+            if (mv_voltage > ROTARY_LOW_MAX) {
+                if (mv_voltage < ROTARY_MIDLOW_TARGET + ROTARY_DELTA) {
+                    *state = rforward1;
+                }
+                else if (mv_voltage < ROTARY_MIDHIGH_TARGET + ROTARY_DELTA) {
+                    *state = rcounter1;
+                }
+            }
+            break;
+        case rcounter1:
+            if (mv_voltage < ROTARY_LOW_MAX) {
+                *state = rcounter2;
+            }
+            break;
+        case rcounter2:
+            if (mv_voltage > ROTARY_MIDLOW_TARGET - ROTARY_DELTA) {
+                *state = rcounter3;
+                return -1;
+            }
+            break;
+        case rcounter3:
+            if (mv_voltage > ROTARY_HIGH_MIN) {
+                *state = rwait;
+            }
+            break;
+        case rforward1:
+            if (mv_voltage < ROTARY_LOW_MAX) {
+                *state = rforward2;
+            }
+            break;
+        case rforward2:
+            if (mv_voltage > ROTARY_MIDLOW_TARGET - ROTARY_DELTA) {
+                *state = rforward3;
+                return 1;
+            }
+            break;
+        case rforward3:
+            if (mv_voltage > ROTARY_HIGH_MIN) {
+                *state = rwait;
+            }
+            break;
+        default:
+            *state = rwait;
+    }
+    return 0;
 }
 
 void adc_init() {
@@ -346,17 +390,6 @@ void ledc_init() {
 }
 
 
-void gpio_interrupt_handler(void *args) {
-    int gpio_num = (int) args;
-    switch (gpio_num) {
-        case MIDI_PANIC_BUTTON:
-            for (int i = 0; i < NUM_VOICES; i++) note_properties[i].is_sounding = false;
-            ESP_ERROR_CHECK(ledc_set_duty(LEDC_MODE, STATUS_LEDC_CHANNEL, 0b00111111));
-            ESP_ERROR_CHECK(ledc_update_duty(LEDC_MODE, STATUS_LEDC_CHANNEL));
-            break;
-    }
-
-}
 
 void gpio_init() {
     gpio_config_t io_conf = {
@@ -371,3 +404,50 @@ void gpio_init() {
     gpio_isr_handler_add(MIDI_PANIC_BUTTON, gpio_interrupt_handler, (void *) MIDI_PANIC_BUTTON);
 }
 
+static bool adc_calibration_init(adc_unit_t unit, adc_channel_t channel, adc_atten_t atten, adc_cali_handle_t *out_handle) {
+    adc_cali_handle_t handle = NULL;
+    esp_err_t ret = ESP_FAIL;
+    bool calibrated = false;
+
+#if ADC_CALI_SCHEME_CURVE_FITTING_SUPPORTED
+    if (!calibrated) {
+        ESP_LOGI(TAG, "calibration scheme version is %s", "Curve Fitting");
+        adc_cali_curve_fitting_config_t cali_config = {
+            .unit_id = unit,
+            .chan = channel,
+            .atten = atten,
+            .bitwidth = MENU_BITS,
+        };
+        ret = adc_cali_create_scheme_curve_fitting(&cali_config, &handle);
+        if (ret == ESP_OK) {
+            calibrated = true;
+        }
+    }
+#endif
+
+#if ADC_CALI_SCHEME_LINE_FITTING_SUPPORTED
+    if (!calibrated) {
+        ESP_LOGI(TAG, "calibration scheme version is %s", "Line Fitting");
+        adc_cali_line_fitting_config_t cali_config = {
+            .unit_id = unit,
+            .atten = atten,
+            .bitwidth = MENU_BITS,
+        };
+        ret = adc_cali_create_scheme_line_fitting(&cali_config, &handle);
+        if (ret == ESP_OK) {
+            calibrated = true;
+        }
+    }
+#endif
+
+    *out_handle = handle;
+    if (ret == ESP_OK) {
+        ESP_LOGI(TAG, "Calibration Success");
+    } else if (ret == ESP_ERR_NOT_SUPPORTED || !calibrated) {
+        ESP_LOGW(TAG, "eFuse not burnt, skip software calibration");
+    } else {
+        ESP_LOGE(TAG, "Invalid arg or no memory");
+    }
+
+    return calibrated;
+}

@@ -22,9 +22,9 @@
 #define DISTORTION_LEDC   27
 
 #define MENU_POT_1    ADC_CHANNEL_0 // gpio36
-#define MENU_POT_2    ADC_CHANNEL_1 // gpio37
-#define MENU_POT_3    ADC_CHANNEL_2 // gpio38
-#define MENU_POT_4    ADC_CHANNEL_3 // gpio39
+#define MENU_POT_2    ADC_CHANNEL_3 // gpio39
+#define MENU_POT_3    ADC_CHANNEL_6 // gpio34
+#define MENU_POT_4    ADC_CHANNEL_7 // gpio35
 #define LOW_PASS_POT  ADC_CHANNEL_4 // gpio32
 #define SELECT_POT    ADC_CHANNEL_5 // gpio33
 
