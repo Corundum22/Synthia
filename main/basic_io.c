@@ -10,23 +10,17 @@
 #include "esp_adc/adc_cali.h"
 #include "esp_adc/adc_cali_scheme.h"
 #include "esp_err.h"
+#include "freertos/semphr.h"
 #include "basic_io.h"
 #include "uart_handler.h"
 #include "synth_audio.h"
 #include "note_handler.h"
+#include "data_y_splitter.h"
 
 
 
 const static char *TAG = "BASIC IO";
 
-#define MAX_MENU_STATE_VAL 4
-enum menu_state_t {
-    madsr = 0,
-    mwave = 1,
-    msequencer_setup = 2,
-    msequencer_page_1 = 3,
-    msequencer_page_2 = 4,
-} typedef menu_state;
 
 // Always accessible values
 menu_state menu_select = madsr;
@@ -159,7 +153,9 @@ static void apply_deltas(int* pot_1_delta, int* pot_2_delta, int* pot_3_delta, i
     }
 
     if (*pot_1_delta | *pot_2_delta | *pot_3_delta | *pot_4_delta | *pot_low_pass_delta | *pot_select_delta) {
-        printf("\033[2JAttack: %03d  Decay: %03d  Sustain: %03d  Release: %03d\nLow pass: %03d  Current menu: %03d\nWave type: %03d\nSequencer enable: %03d  Sequencer clear: %03d\nNote 1: %03d  Note 2: %03d  Note 3: %03d  Note 4: %03d\nNote 5: %03d  Note 6: %03d  Note 7: %03d  Note 8: %03d\n", attack_val, decay_val, sustain_val, release_val, low_pass_val, menu_select, wave_select_val, sequencer_enable_val, sequencer_clear_val, squ_note_1_val, squ_note_2_val, squ_note_3_val, squ_note_4_val, squ_note_5_val, squ_note_6_val, squ_note_7_val, squ_note_8_val);
+        //printf("\033[2JAttack: %03d  Decay: %03d  Sustain: %03d  Release: %03d\nLow pass: %03d  Current menu: %03d\nWave type: %03d\nSequencer enable: %03d  Sequencer clear: %03d\nNote 1: %03d  Note 2: %03d  Note 3: %03d  Note 4: %03d\nNote 5: %03d  Note 6: %03d  Note 7: %03d  Note 8: %03d\n", attack_val, decay_val, sustain_val, release_val, low_pass_val, menu_select, wave_select_val, sequencer_enable_val, sequencer_clear_val, squ_note_1_val, squ_note_2_val, squ_note_3_val, squ_note_4_val, squ_note_5_val, squ_note_6_val, squ_note_7_val, squ_note_8_val);
+        // Allow task_data_split() to execute
+        xSemaphoreGive(ySplitterSemaphore);
     }
     
     *pot_1_delta =

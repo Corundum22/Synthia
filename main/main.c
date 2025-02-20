@@ -13,6 +13,7 @@
 #include "uart_handler.h"
 #include "display_control.h"
 #include "note_handler.h"
+#include "data_y_splitter.h"
 
 
 TaskHandle_t audio_task_handle;
@@ -20,9 +21,11 @@ TaskHandle_t exec_init_task_handle;
 TaskHandle_t midi_uart_task_handle;
 TaskHandle_t adc_task_handle;
 TaskHandle_t display_task_handle;
+TaskHandle_t data_split_task_handle;
 
 
 static void task_create() {
+    xTaskCreate(task_data_split, "Data splitting task", 2048, NULL, 13, &data_split_task_handle);
     xTaskCreate(task_audio_generate, "Audio Generation Task", 2048, NULL, 5, &audio_task_handle);
     xTaskCreate(task_midi_uart, "MIDI UART Task", 4096, NULL, 10, &midi_uart_task_handle);
     xTaskCreate(task_adc, "Potentiometer Checking Task", 2048, NULL, 7, &adc_task_handle);
@@ -50,6 +53,9 @@ static void exec_init() {
 
     adc_init();
     printf("ADC init finished\n");
+
+    data_split_init();
+    printf("Data split init finished\n");
 
     task_create();
     printf("Tasks started\n");

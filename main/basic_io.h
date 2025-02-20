@@ -1,6 +1,8 @@
 #ifndef BASIC_IO_H_
 #define BASIC_IO_H_
 
+#include <stdint.h>
+
 
 #define MIDI_PANIC_BUTTON       13
 #define GPIO_INPUT_PIN_SEL      (1ULL<<MIDI_PANIC_BUTTON)
@@ -38,7 +40,7 @@
 #define DEFAULT_ENVELOPE_VALS    3
 #define DEFAULT_LOW_PASS_VAL     3
 
-#define ANALOG_READ_LOOP_MS      5
+#define ANALOG_READ_LOOP_MS      4
 
 #define ROTARY_HIGH_MIN          2900
 #define ROTARY_DELTA             200
@@ -46,11 +48,45 @@
 #define ROTARY_MIDLOW_TARGET     1089
 #define ROTARY_LOW_MAX           700
 
+#define MAX_MENU_STATE_VAL 4
 
+
+enum menu_state_t {
+    madsr = 0,
+    mwave = 1,
+    msequencer_setup = 2,
+    msequencer_page_1 = 3,
+    msequencer_page_2 = 4,
+} typedef menu_state;
+
+// Always accessible values
+extern menu_state menu_select;
+extern int_fast16_t low_pass_val;
+
+// ADSR menu values
 extern int_fast16_t attack_val;
 extern int_fast16_t decay_val;
 extern int_fast16_t sustain_val;
 extern int_fast16_t release_val;
+
+// Wave menu values
+extern int_fast16_t wave_select_val;
+
+// Sequencer setup values
+extern int_fast16_t sequencer_enable_val;
+extern int_fast16_t sequencer_clear_val;
+
+// Sequencer page 1 note values
+extern int_fast16_t squ_note_1_val;
+extern int_fast16_t squ_note_2_val;
+extern int_fast16_t squ_note_3_val;
+extern int_fast16_t squ_note_4_val;
+
+// Sequencer page 2 note values
+extern int_fast16_t squ_note_5_val;
+extern int_fast16_t squ_note_6_val;
+extern int_fast16_t squ_note_7_val;
+extern int_fast16_t squ_note_8_val;
 
 
 void task_adc();

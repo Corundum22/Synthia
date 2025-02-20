@@ -4,12 +4,8 @@
 #include "esp_err.h"
 #include "esp_timer.h"
 #include "basic_io.h"
+#include "data_y_splitter.h"
 
-
-extern int_fast16_t attack_val;
-extern int_fast16_t decay_val;
-extern int_fast16_t sustain_val;
-extern int_fast16_t release_val;
 
 note_data note_properties[NUM_VOICES] = {{
     is_pressed: false,
@@ -63,21 +59,21 @@ void envelope_timer_callback() {
                 note_properties[i].multiplier = DECAY_LEVEL;
                 break;
             case attack:
-                note_properties[i].multiplier += attack_val;
+                note_properties[i].multiplier += attack_nh;
                 if (note_properties[i].multiplier >= MAX_ENVELOPE_VAL) {
                     note_properties[i].multiplier = MAX_ENVELOPE_VAL;
                     note_properties[i].envelope_state = decay;
                 }
                 break;
             case decay:
-                note_properties[i].multiplier -= decay_val;
+                note_properties[i].multiplier -= decay_nh;
                 if (((int) note_properties[i].multiplier) <= DECAY_LEVEL) {
                     note_properties[i].multiplier = DECAY_LEVEL;
                     note_properties[i].envelope_state = sustain;
                 }
                 break;
             case release:
-                int temp_val = (int) note_properties[i].multiplier - release_val;
+                int temp_val = (int) note_properties[i].multiplier - release_nh;
                 if (temp_val < MIN_ENVELOPE_VAL) {
                     note_properties[i].multiplier = MIN_ENVELOPE_VAL;
                     note_properties[i].is_sounding = false;
