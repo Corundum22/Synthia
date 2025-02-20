@@ -4,9 +4,14 @@
 #include <stdint.h>
 
 
-#define MIDI_PANIC_BUTTON       13
-#define GPIO_INPUT_PIN_SEL      (1ULL<<MIDI_PANIC_BUTTON)
+#define MIDI_PANIC_BUTTON       21
+#define EXTRA_BUTTON            15
+#define GPIO_INPUT_PIN_SEL      ((1ULL<<MIDI_PANIC_BUTTON) | (1ULL<<EXTRA_BUTTON))
 #define ESP_INTR_FLAG_DEFAULT   0
+
+#define SOFT_CLIPPING_EN        27
+#define HARD_CLIPPING_EN        13
+#define GPIO_OUTPUT_PIN_SEL      ((1ULL<<SOFT_CLIPPING_EN) | (1ULL<<HARD_CLIPPING_EN))
 
 #define LEDC_TIMER              LEDC_TIMER_0
 #define LEDC_MODE               LEDC_LOW_SPEED_MODE
@@ -16,12 +21,10 @@
 #define STATUS_LEDC_CHANNEL       LEDC_CHANNEL_0
 #define HIGH_PASS_LEDC_CHANNEL    LEDC_CHANNEL_1
 #define LOW_PASS_LEDC_CHANNEL     LEDC_CHANNEL_2
-#define DISTORTION_LEDC_CHANNEL   LEDC_CHANNEL_3
 
 #define STATUS_LEDC       2
 #define HIGH_PASS_LEDC    12
 #define LOW_PASS_LEDC     14
-#define DISTORTION_LEDC   27
 
 #define MENU_POT_1    ADC_CHANNEL_0 // gpio36
 #define MENU_POT_2    ADC_CHANNEL_3 // gpio39

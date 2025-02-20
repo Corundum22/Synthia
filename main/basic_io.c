@@ -237,8 +237,31 @@ void gpio_interrupt_handler(void *args) {
     switch (gpio_num) {
         case MIDI_PANIC_BUTTON:
             for (int i = 0; i < NUM_VOICES; i++) note_properties[i].is_sounding = false;
+
+            // Test for PWM signals
             ESP_ERROR_CHECK(ledc_set_duty(LEDC_MODE, STATUS_LEDC_CHANNEL, 0b00111111));
             ESP_ERROR_CHECK(ledc_update_duty(LEDC_MODE, STATUS_LEDC_CHANNEL));
+            ESP_ERROR_CHECK(ledc_set_duty(LEDC_MODE, HIGH_PASS_LEDC_CHANNEL, 0b00111111));
+            ESP_ERROR_CHECK(ledc_update_duty(LEDC_MODE, HIGH_PASS_LEDC_CHANNEL));
+            ESP_ERROR_CHECK(ledc_set_duty(LEDC_MODE, LOW_PASS_LEDC_CHANNEL, 0b00111111));
+            ESP_ERROR_CHECK(ledc_update_duty(LEDC_MODE, LOW_PASS_LEDC_CHANNEL));
+
+            // Test to ensure midi panic button and clipping outputs are functional
+            ESP_ERROR_CHECK(gpio_set_level(HARD_CLIPPING_EN, 1));
+            ESP_ERROR_CHECK(gpio_set_level(SOFT_CLIPPING_EN, 0));
+            break;
+        case EXTRA_BUTTON:
+            // Test for PWM signals
+            ESP_ERROR_CHECK(ledc_set_duty(LEDC_MODE, STATUS_LEDC_CHANNEL, 0b00000111));
+            ESP_ERROR_CHECK(ledc_update_duty(LEDC_MODE, STATUS_LEDC_CHANNEL));
+            ESP_ERROR_CHECK(ledc_set_duty(LEDC_MODE, HIGH_PASS_LEDC_CHANNEL, 0b00000111));
+            ESP_ERROR_CHECK(ledc_update_duty(LEDC_MODE, HIGH_PASS_LEDC_CHANNEL));
+            ESP_ERROR_CHECK(ledc_set_duty(LEDC_MODE, LOW_PASS_LEDC_CHANNEL, 0b00000111));
+            ESP_ERROR_CHECK(ledc_update_duty(LEDC_MODE, LOW_PASS_LEDC_CHANNEL));
+
+            // Test to ensure extra button and clipping outputs are functional
+            ESP_ERROR_CHECK(gpio_set_level(SOFT_CLIPPING_EN, 1));
+            ESP_ERROR_CHECK(gpio_set_level(HARD_CLIPPING_EN, 0));
             break;
     }
 
@@ -371,33 +394,33 @@ void ledc_init() {
         .hpoint = 0,
     };
     ESP_ERROR_CHECK(ledc_channel_config(&high_pass_ledc_channel_conf));
-    
-    // Configure distortion pwm control
-    ledc_channel_config_t distortion_ledc_channel_conf = {
-        .speed_mode = LEDC_MODE,
-        .channel = DISTORTION_LEDC_CHANNEL,
-        .timer_sel = LEDC_TIMER,
-        .intr_type = LEDC_INTR_DISABLE,
-        .gpio_num = DISTORTION_LEDC,
-        .duty = 0,
-        .hpoint = 0,
-    };
-    ESP_ERROR_CHECK(ledc_channel_config(&distortion_ledc_channel_conf));
 }
 
 
 
 void gpio_init() {
-    gpio_config_t io_conf = {
+    gpio_config_t io_input_conf = {
         .intr_type = GPIO_INTR_POSEDGE,
         .pin_bit_mask = GPIO_INPUT_PIN_SEL,
         .mode = GPIO_MODE_INPUT,
         .pull_up_en = 1,
+        .pull_down_en = 0,
     };
-    gpio_config(&io_conf);
+    gpio_config(&io_input_conf);
 
     gpio_install_isr_service(ESP_INTR_FLAG_DEFAULT);
     gpio_isr_handler_add(MIDI_PANIC_BUTTON, gpio_interrupt_handler, (void *) MIDI_PANIC_BUTTON);
+    gpio_isr_handler_add(EXTRA_BUTTON, gpio_interrupt_handler, (void *) EXTRA_BUTTON);
+
+
+    gpio_config_t io_output_conf = {
+        .intr_type = GPIO_INTR_DISABLE,
+        .pin_bit_mask = GPIO_OUTPUT_PIN_SEL,
+        .mode = GPIO_MODE_OUTPUT,
+        .pull_up_en = 0,
+        .pull_down_en = 0,
+    };
+    gpio_config(&io_output_conf);
 }
 
 static bool adc_calibration_init(adc_unit_t unit, adc_channel_t channel, adc_atten_t atten, adc_cali_handle_t *out_handle) {
