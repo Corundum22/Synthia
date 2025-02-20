@@ -39,6 +39,6 @@ direct_dependencies:
 - espressif/esp_lvgl_port
 - idf
 - lvgl/lvgl
-manifest_hash: 627e09f690a935fc680bb80b5883af02746779f747530644bdbdee6b67de168a
+manifest_hash: 70e9772e699d3a40dc563c0465a8d3ae5a4bf846e97a671e5fe7cf9ddfe0d438
 target: esp32
 version: 2.0.0
