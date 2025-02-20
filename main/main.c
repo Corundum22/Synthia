@@ -57,6 +57,9 @@ static void exec_init() {
     data_split_init();
     printf("Data split init finished\n");
 
+    spi_init();
+    printf("SPI initialized\n");
+
     task_create();
     printf("Tasks started\n");
 

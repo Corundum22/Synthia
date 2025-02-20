@@ -30,7 +30,4 @@ void create_ui()
     lv_label_set_text(menu_pot_1_text, "Waiting");
     lv_obj_set_style_text_color(menu_pot_1_text, lv_color_white(), LV_PART_MAIN);
     lv_obj_center(menu_pot_1_text);
-    
-    lv_timer_t *lv_update_timer = lv_timer_create(update_ui_cb, 120, NULL);
-    lv_timer_ready(lv_update_timer);
 }

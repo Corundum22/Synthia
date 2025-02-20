@@ -68,7 +68,7 @@ static void IRAM_ATTR lvgl_tick_cb(void *param)
 	lv_tick_inc(LVGL_UPDATE_PERIOD_MS);
 }
 
-void initialize_spi()
+void spi_init()
 {
     ESP_LOGI(TAG, "Initializing SPI bus (MOSI:%d, MISO:%d, CLK:%d)",
              CONFIG_SPI_MOSI, CONFIG_SPI_MISO, CONFIG_SPI_CLOCK);
@@ -92,7 +92,7 @@ void initialize_spi()
     ESP_ERROR_CHECK(spi_bus_initialize(SPI2_HOST, &bus, SPI_DMA_CH_AUTO));
 }
 
-void initialize_display()
+static void initialize_display()
 {
     const esp_lcd_panel_io_spi_config_t io_config = 
     {
@@ -152,7 +152,7 @@ void initialize_display()
 #endif
 }
 
-void initialize_lvgl()
+static void initialize_lvgl()
 {
     ESP_LOGI(TAG, "Initializing LVGL");
     lv_init();
@@ -185,13 +185,18 @@ void initialize_lvgl()
     ESP_ERROR_CHECK(esp_timer_start_periodic(lvgl_tick_timer, LVGL_UPDATE_PERIOD_MS * 1000));
 }
 
+static void set_ui_update() {
+    lv_timer_t *lv_update_timer = lv_timer_create(update_ui_cb, 120, NULL);
+    lv_timer_ready(lv_update_timer);
+}
+
 
 void task_display()
 {
-    initialize_spi();
     initialize_display();
     initialize_lvgl();
     create_ui();
+    set_ui_update();
     
     while (1)
     {
