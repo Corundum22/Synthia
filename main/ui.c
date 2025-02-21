@@ -31,3 +31,5 @@ void create_ui()
     lv_obj_set_style_text_color(menu_pot_1_text, lv_color_white(), LV_PART_MAIN);
     lv_obj_center(menu_pot_1_text);
 }
+
+//test
