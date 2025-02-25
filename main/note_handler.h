@@ -18,12 +18,12 @@
 #define MULTIPLIER_WIDTH    8
 
 
-extern note_data note_properties[NUM_VOICES];
+extern note_data note_properties[NUM_VOICES + SEQ_VOICES];
 
 void set_keypress(uint_fast8_t key_num);
 void set_keyrelease(uint_fast8_t key_num);
-void seq_set_keypress(uint_fast8_t key_num);
-void seq_set_keyrelease(uint_fast8_t key_num);
+void set_squ_keypress(uint_fast8_t key_num);
+void set_squ_keyrelease(uint_fast8_t key_num);
 void envelope_timer_init();
 
 

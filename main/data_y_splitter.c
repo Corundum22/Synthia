@@ -13,35 +13,20 @@ SemaphoreHandle_t guiSemaphore; // protects the copied data to be used by the gu
 SemaphoreHandle_t ySplitterSemaphore; // protects the original data sources
 
 
-// Note handler always accessible values
-menu_state menu_select_squ = madsr;
-int_fast16_t low_pass_squ = DEFAULT_LOW_PASS_VAL;
-
 // Note handler ADSR menu values
-int_fast16_t attack_squ = DEFAULT_ENVELOPE_VALS;
-int_fast16_t decay_squ = DEFAULT_ENVELOPE_VALS;
-int_fast16_t sustain_squ = DEFAULT_ENVELOPE_VALS;
-int_fast16_t release_squ = DEFAULT_ENVELOPE_VALS;
+int_fast16_t attack_nh = DEFAULT_ENVELOPE_VALS;
+int_fast16_t decay_nh = DEFAULT_ENVELOPE_VALS;
+int_fast16_t sustain_nh = DEFAULT_ENVELOPE_VALS;
+int_fast16_t release_nh = DEFAULT_ENVELOPE_VALS;
 
-// Note handler wave menu values
-int_fast16_t wave_select_squ = 1;
+// Synth audio wave menu values
+int_fast16_t wave_select_syn = 1;
 
 // Note handler sequencer setup values
-int_fast16_t sequencer_enable_squ = 0;
-int_fast16_t sequencer_clear_squ = 0;
-
-// Note handler sequencer page 1 note values
-int_fast16_t squ_note_1_squ = 0;
-int_fast16_t squ_note_2_squ = 0;
-int_fast16_t squ_note_3_squ = 0;
-int_fast16_t squ_note_4_squ = 0;
-
-// Note handler sequencer page 2 note values
-int_fast16_t squ_note_5_squ = 0;
-int_fast16_t squ_note_6_squ = 0;
-int_fast16_t squ_note_7_squ = 0;
-int_fast16_t squ_note_8_squ = 0;
-
+int_fast16_t squ_enable_squ = 0;
+int_fast16_t squ_length_squ = 0;
+int_fast16_t squ_tempo_squ = 1;
+int_fast16_t squ_duration_squ = 1;
 
 // GUI always accessible values
 menu_state menu_select_gui = madsr;
@@ -55,28 +40,18 @@ int_fast16_t release_gui = DEFAULT_ENVELOPE_VALS;
 
 // GUI wave menu values
 int_fast16_t wave_select_gui = 1;
+int_fast16_t high_pass_gui = DEFAULT_HIGH_PASS_VAL;
 
 // GUI sequencer setup values
-int_fast16_t sequencer_enable_gui = 0;
-int_fast16_t sequencer_clear_gui = 0;
-
-// GUI sequencer page 1 note values
-// tempo select
-int_fast16_t squ_note_1_gui = 0;
-// pattern length
-int_fast16_t squ_note_2_gui = 0;
-// note length
-int_fast16_t squ_note_3_gui = 0;
-int_fast16_t squ_note_4_gui = 0;
-
-// GUI sequencer page 2 note values
-int_fast16_t squ_note_5_gui = 0;
-int_fast16_t squ_note_6_gui = 0;
-int_fast16_t squ_note_7_gui = 0;
-int_fast16_t squ_note_8_gui = 0;
+int_fast16_t squ_enable_gui = 0;
+int_fast16_t squ_length_gui = 0;
+int_fast16_t squ_tempo_gui = 1;
+int_fast16_t squ_duration_gui = 1;
 
 static void copy_gui();
 static void copy_squ();
+static void copy_nh();
+static void copy_syn();
 
 
 
@@ -90,6 +65,8 @@ void task_data_split() {
         if (pdTRUE == xSemaphoreTake(ySplitterSemaphore, portMAX_DELAY)) {
             copy_squ();
             copy_gui();
+            copy_nh();
+            copy_syn();
         }
     }
 }
@@ -99,41 +76,34 @@ static void copy_gui() {
 
     menu_select_gui = menu_select;
     low_pass_gui = low_pass_val;
+    high_pass_gui = high_pass_val;
     attack_gui = attack_val;
     decay_gui = decay_val;
     sustain_gui = sustain_val;
     release_gui = release_val;
     wave_select_gui = wave_select_val;
-    sequencer_enable_gui = sequencer_enable_val;
-    sequencer_clear_gui = sequencer_clear_val;
-    squ_note_1_gui = squ_note_1_val;
-    squ_note_2_gui = squ_note_2_val;
-    squ_note_3_gui = squ_note_3_val;
-    squ_note_4_gui = squ_note_4_val;
-    squ_note_5_gui = squ_note_5_val;
-    squ_note_6_gui = squ_note_6_val;
-    squ_note_7_gui = squ_note_7_val;
-    squ_note_8_gui = squ_note_8_val;
+    squ_enable_gui = squ_enable_val;
+    squ_length_gui = squ_length_val;
+    squ_tempo_gui = squ_tempo_val;
+    squ_duration_gui = squ_duration_val;
 
     xSemaphoreGive(guiSemaphore);
 }
 
 static void copy_squ() {
-    menu_select_squ = menu_select;
-    low_pass_squ = low_pass_val;
-    attack_squ = attack_val;
-    decay_squ = decay_val;
-    sustain_squ = sustain_val;
-    release_squ = release_val;
-    wave_select_squ = wave_select_val;
-    sequencer_enable_squ = sequencer_enable_val;
-    sequencer_clear_squ = sequencer_clear_val;
-    squ_note_1_squ = squ_note_1_val;
-    squ_note_2_squ = squ_note_2_val;
-    squ_note_3_squ = squ_note_3_val;
-    squ_note_4_squ = squ_note_4_val;
-    squ_note_5_squ = squ_note_5_val;
-    squ_note_6_squ = squ_note_6_val;
-    squ_note_7_squ = squ_note_7_val;
-    squ_note_8_squ = squ_note_8_val;
+    squ_enable_squ = squ_enable_val;
+    squ_length_squ = squ_length_val;
+    squ_tempo_squ = squ_tempo_val;
+    squ_duration_squ = squ_duration_val;
+}
+
+static void copy_nh() {
+    attack_nh = attack_val;
+    decay_nh = decay_val;
+    sustain_nh = sustain_val;
+    release_nh = release_val;
+}
+
+static void copy_syn() {
+    wave_select_syn = wave_select_val;
 }

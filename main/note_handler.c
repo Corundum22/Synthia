@@ -12,7 +12,6 @@ note_data note_properties[NUM_VOICES + SEQ_VOICES] = {{
     is_pressed: false,
     is_sounding: false,
     envelope_state: nothing,
-    //attack, decay, sustain, release 
     note_num: 0,
     multiplier: MIN_ENVELOPE_VAL,
 }};
@@ -22,7 +21,7 @@ esp_timer_handle_t envelope_timer_handle;
 
 void set_keypress(uint_fast8_t key_num) {
     for (int i = 0; i < NUM_VOICES; i++) {
-        if (note_properties[i].note_num == key_num && note_properties[i].is_sounding == true) {
+        if (note_properties[i].note_num == key_num && note_properties[i].is_pressed == true) {
             printf("Unison note rejected\n");
             return; // return without doing anything if the key is already pressed
                     // i.e. no unison keys
@@ -52,7 +51,7 @@ void set_keyrelease(uint_fast8_t key_num) {
 }
 
 
-void seq_set_keypress(uint_fast8_t key_num) {
+void set_squ_keypress(uint_fast8_t key_num) {
     for (int i = NUM_VOICES; i < NUM_VOICES + SEQ_VOICES; i++) {
         if (note_properties[i].note_num == key_num && note_properties[i].is_sounding == true) {
             printf("Unison note rejected\n");
@@ -60,7 +59,7 @@ void seq_set_keypress(uint_fast8_t key_num) {
                     // i.e. no unison keys
         }
     }
-    for (int NUM_VOICES; i < NUM_VOICES + SEQ_VOICES; i++) {
+    for (int i = NUM_VOICES; i < NUM_VOICES + SEQ_VOICES; i++) {
         if (note_properties[i].is_pressed == false) {
 
             note_properties[i].is_pressed = true;
@@ -74,8 +73,8 @@ void seq_set_keypress(uint_fast8_t key_num) {
     }
 }
 
-void seq_set_keyrelease(uint_fast8_t key_num) {
-    for (int NUM_VOICES; i < NUM_VOICES + SEQ_VOICES; i++) {
+void set_squ_keyrelease(uint_fast8_t key_num) {
+    for (int i = NUM_VOICES; i < NUM_VOICES + SEQ_VOICES; i++) {
         if (note_properties[i].note_num == key_num && note_properties[i].is_pressed == true) {
             note_properties[i].is_pressed = false;
             note_properties[i].envelope_state = release;

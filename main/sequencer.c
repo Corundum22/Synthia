@@ -6,75 +6,55 @@
 #include "esp_err.h"
 #include "freertos/FreeRTOS.h"
 #include "driver/uart.h"
+#include "freertos/projdefs.h"
 #include "freertos/queue.h"
 #include "uart_handler.h"
 #include "synth_audio.h"
 #include "note_handler.h"
 #include "data_y_splitter.h"
+#include "esp_timer.h"
+#include "sequencer.h"
 
+
+// test_pattern is a temporary pattern of midi note numbers
+// intended only for testing sequencer_timer_callback
+uint_fast8_t test_pattern[SEQ_LEN] = { 0, 7, 14, 21, 28, 35, 
+    42, 49, 56, 63, 70, 77, 84, 91, 98, 105, 112, 119, 126, 
+    6, 13, 20, 27, 34, 41, 48, 55, 62, 69, 76, 83, 90, 97, 104, 
+    111, 118, 125, 5, 12, 19, 26, 33, 40, 47, 54, 61, 68, 75, 
+    82, 89, 96, 103, 110, 117, 124, 4, 11, 18, 25, 32, 39, 46, 
+    53, 60 };
 
 esp_timer_handle_t sequencer_timer_handle;
 
+int_fast8_t current_seq_index = 0;
 
 
-
-
-
-
-//squ_note_1_squ
-//tempo knob 1
-//squ_note_2_squ
-//pattern length will be knob 2
-
-//note length will be knob 3
-
-
-
-//sequencer_enable_squ
-
-//sequencer_clear_squ
-
-note_data sequencer_values[SEQ_LENGTH] = {{
-    is_pressed: false,
-    is_sounding: false,
-    envelope_state: nothing,
-    note_num: 0,
-    multiplier: MIN_ENVELOPE_VAL,
-}};
-
-int last_tempo = 0;
-int current_seq_pos = 0;
-
-
-void sequencer_timer_callback(){
-    if(sequencer_enable_squ){
-		//sequencer is enabled
-        tempo = squ_note_1_squ*TEMPO_PERIOD_MULTIPLIER;
-        tempo_period = 60000000/(tempo);
-        
-        
-        
-        if(last_tempo != tempo){
-            esp_timer_stop(sequencer_timer_handle);
-            esp_timer_start_periodic(sequencer_timer_handle, tempo_period);
-        }
-
-
-
-
-        current_seq_pos++;
-        if(current_seq_pos > squ_note_2_squ){
-            current_seq_pos = 0;
-        }
-	}
-
-
-	if(sequencer_clear_squ){
-			//clear sequencer
+void task_sequencer() {
+    while (1) {
+        // TODO: make this useful
+        vTaskDelay(pdMS_TO_TICKS(1000));
     }
 }
 
+void sequencer_timer_callback() {
+	// Execute if sequencer is enabled
+    if (squ_enable_squ) {
+        set_squ_keyrelease(test_pattern[(current_seq_index + SEQ_LEN - 1) % SEQ_LEN]);
+        set_squ_keypress(test_pattern[current_seq_index]);
 
+        current_seq_index++;
+
+        if (current_seq_index >= squ_length_squ) {
+            current_seq_index = 0;
+        }
+	}
+}
+
+void update_squ_timer(int_fast16_t new_val) {
+    uint64_t us_new_val = BPM_US_FACTOR / (new_val * TEMPO_PERIOD_MULTIPLIER);
+    ESP_ERROR_CHECK(esp_timer_restart(sequencer_timer_handle, us_new_val));
+}
 
 void sequencer_timer_init() {
     const esp_timer_create_args_t sequencer_timer_args = {
@@ -83,16 +63,5 @@ void sequencer_timer_init() {
     };
 
     ESP_ERROR_CHECK(esp_timer_create(&sequencer_timer_args, &sequencer_timer_handle));
-    ESP_ERROR_CHECK(esp_timer_start_periodic(sequencer_timer_handle, tempo_period));
+    ESP_ERROR_CHECK(esp_timer_start_periodic(sequencer_timer_handle, DEFAULT_SQU_TEMPO_US));
 }
-
-
-
-
-
-//set_keypress(uint_fast8_t key_num)
-
-//set_keyrelease(uint_fast8_t key_num)
-
-
-

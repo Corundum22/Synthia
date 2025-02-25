@@ -7,7 +7,10 @@
 #include "synth_audio.h"
 #include "note_handler.h"
 #include "global_header.h"
+#include "sequencer.h"
 
+
+#define NUM_COMB_VOICES (NUM_VOICES + SEQ_VOICES)
 
 #define GET_NOTE(i) \
 if (note_properties[i].is_sounding == true) {\
@@ -48,37 +51,37 @@ void task_audio_generate() {
         uint32_t data = 0;
         uint_fast8_t times_added = 0;
 
-        #if NUM_VOICES >= 1
+        #if NUM_COMB_VOICES >= 1
             GET_NOTE(0)
         #endif
-        #if NUM_VOICES >= 2
+        #if NUM_COMB_VOICES >= 2
             GET_NOTE(1)
         #endif
-        #if NUM_VOICES >= 3
+        #if NUM_COMB_VOICES >= 3
             GET_NOTE(2)
         #endif
-        #if NUM_VOICES >= 4
+        #if NUM_COMB_VOICES >= 4
             GET_NOTE(3)
         #endif
-        #if NUM_VOICES >= 5
+        #if NUM_COMB_VOICES >= 5
             GET_NOTE(4)
         #endif
-        #if NUM_VOICES >= 6
+        #if NUM_COMB_VOICES >= 6
             GET_NOTE(5)
         #endif
-        #if NUM_VOICES >= 7
+        #if NUM_COMB_VOICES >= 7
             GET_NOTE(6)
         #endif
-        #if NUM_VOICES >= 8
+        #if NUM_COMB_VOICES >= 8
             GET_NOTE(7)
         #endif
+        #if NUM_COMB_VOICES >= 9
+            GET_NOTE(8)
+        #endif
+        #if NUM_COMB_VOICES >= 10
+            GET_NOTE(9)
+        #endif
 
-
-        if (note_properties[9].is_sounding == true) {
-            data += wave(note_properties[9].note_num, note_properties[i].multiplier, time);
-            times_added++;
-        }
-}
         
         if (times_added != 0) data /= times_added;
 

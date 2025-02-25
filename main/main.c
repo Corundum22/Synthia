@@ -8,6 +8,7 @@
 #include "esp_log.h"
 #include "driver/dac_oneshot.h"
 #include "driver/gptimer.h"
+#include "sequencer.h"
 #include "synth_audio.h"
 #include "basic_io.h"
 #include "uart_handler.h"
@@ -40,6 +41,9 @@ static void exec_init() {
 
     envelope_timer_init();
     printf("Envelope timer init finished\n");
+
+    sequencer_timer_init();
+    printf("Sequencer timer init finished\n");
 
     dac_init();
     printf("DAC init finished\n");

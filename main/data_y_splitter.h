@@ -1,44 +1,29 @@
 #ifndef DATA_Y_SPLITTER_
 #define DATA_Y_SPLITTER_
 
+#include <stdint.h>
 #include "freertos/FreeRTOS.h"
 #include "freertos/semphr.h"
-#include <stdint.h>
+#include "global_header.h"
 
 
 extern SemaphoreHandle_t guiSemaphore; // protects the copied data to be used by the gui
 extern SemaphoreHandle_t ySplitterSemaphore; // protects the original data sources
 
-
-// Note handler always accessible values
-extern menu_state menu_select_squ;
-extern int_fast16_t low_pass_squ;
-
 // Note handler ADSR menu values
-extern int_fast16_t attack_squ;
-extern int_fast16_t decay_squ;
-extern int_fast16_t sustain_squ;
-extern int_fast16_t release_squ;
+extern int_fast16_t attack_nh;
+extern int_fast16_t decay_nh;
+extern int_fast16_t sustain_nh;
+extern int_fast16_t release_nh;
 
-// Note handler wave menu values
-extern int_fast16_t wave_select_squ;
+// Synth audio wave menu values
+extern int_fast16_t wave_select_syn;
 
-// Note handler sequencer setup values
-extern int_fast16_t sequencer_enable_squ;
-extern int_fast16_t sequencer_clear_squ;
-
-// Note handler sequencer page 1 note values
-extern int_fast16_t squ_note_1_squ;
-extern int_fast16_t squ_note_2_squ;
-extern int_fast16_t squ_note_3_squ;
-extern int_fast16_t squ_note_4_squ;
-
-// Note handler sequencer page 2 note values
-extern int_fast16_t squ_note_5_squ;
-extern int_fast16_t squ_note_6_squ;
-extern int_fast16_t squ_note_7_squ;
-extern int_fast16_t squ_note_8_squ;
-
+// Sequencer sequencer setup values
+extern int_fast16_t squ_enable_squ;
+extern int_fast16_t squ_length_squ;
+extern int_fast16_t squ_tempo_squ;
+extern int_fast16_t squ_duration_squ;
 
 // GUI always accessible values
 extern menu_state menu_select_gui;
@@ -52,26 +37,18 @@ extern int_fast16_t release_gui;
 
 // GUI wave menu values
 extern int_fast16_t wave_select_gui;
+extern int_fast16_t high_pass_gui;
 
 // GUI sequencer setup values
 extern int_fast16_t sequencer_enable_gui;
-extern int_fast16_t sequencer_clear_gui;
-
-// GUI sequencer page 1 note values
-extern int_fast16_t squ_note_1_gui;
-extern int_fast16_t squ_note_2_gui;
-extern int_fast16_t squ_note_3_gui;
-extern int_fast16_t squ_note_4_gui;
-
-// GUI sequencer page 2 note values
-extern int_fast16_t squ_note_5_gui;
-extern int_fast16_t squ_note_6_gui;
-extern int_fast16_t squ_note_7_gui;
-extern int_fast16_t squ_note_8_gui;
+extern int_fast16_t sequencer_length_gui;
+extern int_fast16_t squ_tempo_gui;
+extern int_fast16_t squ_duration_gui;
 
 
 void data_split_init();
 
 void task_data_split();
+
 
 #endif // DATA_Y_SPLITTER_
