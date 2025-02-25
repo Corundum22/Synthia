@@ -48,7 +48,7 @@ void sequencer_timer_callback() {
         if (current_seq_index >= squ_length_squ) {
             current_seq_index = 0;
         }
-	}
+    }
 }
 
 void update_squ_timer(int_fast16_t new_val) {
