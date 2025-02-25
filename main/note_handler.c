@@ -5,12 +5,14 @@
 #include "esp_timer.h"
 #include "basic_io.h"
 #include "data_y_splitter.h"
+#include "sequencer.h"
 
 
-note_data note_properties[NUM_VOICES] = {{
+note_data note_properties[NUM_VOICES + SEQ_VOICES] = {{
     is_pressed: false,
     is_sounding: false,
     envelope_state: nothing,
+    //attack, decay, sustain, release 
     note_num: 0,
     multiplier: MIN_ENVELOPE_VAL,
 }};
@@ -49,8 +51,40 @@ void set_keyrelease(uint_fast8_t key_num) {
     }
 }
 
+
+void seq_set_keypress(uint_fast8_t key_num) {
+    for (int i = NUM_VOICES; i < NUM_VOICES + SEQ_VOICES; i++) {
+        if (note_properties[i].note_num == key_num && note_properties[i].is_sounding == true) {
+            printf("Unison note rejected\n");
+            return; // return without doing anything if the key is already pressed
+                    // i.e. no unison keys
+        }
+    }
+    for (int NUM_VOICES; i < NUM_VOICES + SEQ_VOICES; i++) {
+        if (note_properties[i].is_pressed == false) {
+
+            note_properties[i].is_pressed = true;
+            note_properties[i].is_sounding = true;
+            note_properties[i].envelope_state = attack;
+            note_properties[i].note_num = key_num;
+
+            printf("Sequencer note has been turned on\n");
+            return;
+        }
+    }
+}
+
+void seq_set_keyrelease(uint_fast8_t key_num) {
+    for (int NUM_VOICES; i < NUM_VOICES + SEQ_VOICES; i++) {
+        if (note_properties[i].note_num == key_num && note_properties[i].is_pressed == true) {
+            note_properties[i].is_pressed = false;
+            note_properties[i].envelope_state = release;
+        }
+    }
+}
+
 void envelope_timer_callback() {
-    for (int i = 0; i < NUM_VOICES; i++) {
+    for (int i = 0; i < NUM_VOICES + SEQ_VOICES; i++) {
         if (note_properties[i].is_sounding) {
         switch (note_properties[i].envelope_state) {
             case sustain:

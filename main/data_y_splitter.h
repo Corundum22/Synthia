@@ -11,33 +11,33 @@ extern SemaphoreHandle_t ySplitterSemaphore; // protects the original data sourc
 
 
 // Note handler always accessible values
-extern menu_state menu_select_nh;
-extern int_fast16_t low_pass_nh;
+extern menu_state menu_select_squ;
+extern int_fast16_t low_pass_squ;
 
 // Note handler ADSR menu values
-extern int_fast16_t attack_nh;
-extern int_fast16_t decay_nh;
-extern int_fast16_t sustain_nh;
-extern int_fast16_t release_nh;
+extern int_fast16_t attack_squ;
+extern int_fast16_t decay_squ;
+extern int_fast16_t sustain_squ;
+extern int_fast16_t release_squ;
 
 // Note handler wave menu values
-extern int_fast16_t wave_select_nh;
+extern int_fast16_t wave_select_squ;
 
 // Note handler sequencer setup values
-extern int_fast16_t sequencer_enable_nh;
-extern int_fast16_t sequencer_clear_nh;
+extern int_fast16_t sequencer_enable_squ;
+extern int_fast16_t sequencer_clear_squ;
 
 // Note handler sequencer page 1 note values
-extern int_fast16_t squ_note_1_nh;
-extern int_fast16_t squ_note_2_nh;
-extern int_fast16_t squ_note_3_nh;
-extern int_fast16_t squ_note_4_nh;
+extern int_fast16_t squ_note_1_squ;
+extern int_fast16_t squ_note_2_squ;
+extern int_fast16_t squ_note_3_squ;
+extern int_fast16_t squ_note_4_squ;
 
 // Note handler sequencer page 2 note values
-extern int_fast16_t squ_note_5_nh;
-extern int_fast16_t squ_note_6_nh;
-extern int_fast16_t squ_note_7_nh;
-extern int_fast16_t squ_note_8_nh;
+extern int_fast16_t squ_note_5_squ;
+extern int_fast16_t squ_note_6_squ;
+extern int_fast16_t squ_note_7_squ;
+extern int_fast16_t squ_note_8_squ;
 
 
 // GUI always accessible values

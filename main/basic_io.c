@@ -147,7 +147,7 @@ static void apply_deltas(int* pot_1_delta, int* pot_2_delta, int* pot_3_delta, i
             break;
         case msequencer_page_1:
             squ_note_1_val = saturation_add(squ_note_1_val, *pot_1_delta, 0, 127);
-            squ_note_2_val = saturation_add(squ_note_2_val, *pot_2_delta, 0, 127);
+            squ_note_2_val = saturation_add(squ_note_2_val, *pot_2_delta, 0, SEQ_LENGTH);
             squ_note_3_val = saturation_add(squ_note_3_val, *pot_3_delta, 0, 127);
             squ_note_4_val = saturation_add(squ_note_4_val, *pot_4_delta, 0, 127);
 

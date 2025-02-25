@@ -22,6 +22,7 @@ TaskHandle_t midi_uart_task_handle;
 TaskHandle_t adc_task_handle;
 TaskHandle_t display_task_handle;
 TaskHandle_t data_split_task_handle;
+TaskHandle_t sequencer_task_handle;
 
 
 static void task_create() {
@@ -30,6 +31,7 @@ static void task_create() {
     xTaskCreate(task_midi_uart, "MIDI UART Task", 4096, NULL, 10, &midi_uart_task_handle);
     xTaskCreate(task_adc, "Potentiometer Checking Task", 2048, NULL, 7, &adc_task_handle);
     xTaskCreate(task_display, "Display Control Task", 4096*2, NULL, 11, &display_task_handle);
+    xTaskCreate(task_sequencer, "Make the sequencer work", 2048, NULL, 8, &sequencer_task_handle);
 }
 
 static void exec_init() {

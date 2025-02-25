@@ -5,6 +5,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 #include "global_header.h"
+#include "sequencer.h"
 
 #define NUM_VOICES                    8
 #define ENVELOPE_TRIGGER_PERIOD_US    10000
@@ -21,6 +22,8 @@ extern note_data note_properties[NUM_VOICES];
 
 void set_keypress(uint_fast8_t key_num);
 void set_keyrelease(uint_fast8_t key_num);
+void seq_set_keypress(uint_fast8_t key_num);
+void seq_set_keyrelease(uint_fast8_t key_num);
 void envelope_timer_init();
 
 

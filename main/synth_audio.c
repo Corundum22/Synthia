@@ -16,6 +16,8 @@ if (note_properties[i].is_sounding == true) {\
 }
 
 
+
+
 dac_oneshot_handle_t lower_dac_handle;
 dac_oneshot_handle_t upper_dac_handle;
 gptimer_handle_t wave_gen_timer;
@@ -70,6 +72,13 @@ void task_audio_generate() {
         #if NUM_VOICES >= 8
             GET_NOTE(7)
         #endif
+
+
+        if (note_properties[9].is_sounding == true) {
+            data += wave(note_properties[9].note_num, note_properties[i].multiplier, time);
+            times_added++;
+        }
+}
         
         if (times_added != 0) data /= times_added;
 
