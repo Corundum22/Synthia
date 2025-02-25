@@ -15,8 +15,9 @@
 
 #define LEDC_TIMER              LEDC_TIMER_0
 #define LEDC_MODE               LEDC_LOW_SPEED_MODE
-#define LEDC_DUTY_RES           LEDC_TIMER_7_BIT // Set duty resolution to 7 bits
-#define LEDC_FREQUENCY          312500 // Set frequency at 312.5 kHz
+#define LEDC_DUTY_RES           LEDC_TIMER_8_BIT // Set duty resolution to 8 bits
+#define LEDC_DUTY_MAX_VAL       255
+#define LEDC_FREQUENCY          156250 // Set frequency at 156250 Hz
 
 #define STATUS_LEDC_CHANNEL       LEDC_CHANNEL_0
 #define HIGH_PASS_LEDC_CHANNEL    LEDC_CHANNEL_1
@@ -42,6 +43,7 @@
 
 #define DEFAULT_ENVELOPE_VALS    3
 #define DEFAULT_LOW_PASS_VAL     3
+#define DEFAULT_HIGH_PASS_VAL    3
 
 #define ANALOG_READ_LOOP_MS      4
 

@@ -6,6 +6,7 @@
 #include "uart_handler.h"
 #include "synth_audio.h"
 #include "note_handler.h"
+#include "global_header.h"
 
 
 #define GET_NOTE(i) \

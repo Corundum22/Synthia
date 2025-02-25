@@ -7,6 +7,7 @@
 #include "basic_io.h"
 #include "data_y_splitter.h"
 #include "freertos/task.h"
+#include "global_header.h"
 
 SemaphoreHandle_t guiSemaphore; // protects the copied data to be used by the gui
 SemaphoreHandle_t ySplitterSemaphore; // protects the original data sources

@@ -16,6 +16,7 @@
 #include "synth_audio.h"
 #include "note_handler.h"
 #include "data_y_splitter.h"
+#include "global_header.h"
 
 
 
@@ -34,6 +35,7 @@ int_fast16_t release_val = DEFAULT_ENVELOPE_VALS;
 
 // Wave menu values
 int_fast16_t wave_select_val = 1;
+int_fast16_t high_pass_val = DEFAULT_HIGH_PASS_VAL;
 
 // Sequencer setup values
 int_fast16_t sequencer_enable_val = 0;
@@ -96,6 +98,9 @@ static rotary_state select_last_rotary = rwait;
 static int32_t rotary_encoder_interpret(uint_fast32_t mv_voltage, rotary_state* state);
 static bool adc_calibration_init(adc_unit_t unit, adc_channel_t channel, adc_atten_t atten, adc_cali_handle_t *out_handle);
 
+void apply_low_pass(uint8_t val_to_apply);
+void apply_high_pass(uint8_t val_to_apply);
+
 
 // Save diagnostic stack
 #pragma GCC diagnostic push
@@ -114,8 +119,11 @@ static int saturation_add(int val_1, int val_2, int lower_bound, int upper_bound
 
 static void apply_deltas(int* pot_1_delta, int* pot_2_delta, int* pot_3_delta, int* pot_4_delta, int* pot_low_pass_delta, int* pot_select_delta) {
 
+    if (*pot_low_pass_delta) {
+        low_pass_val = saturation_add(low_pass_val, *pot_low_pass_delta, 0, LEDC_DUTY_MAX_VAL);
+        apply_low_pass((uint8_t) low_pass_val);
+    }
     menu_select = saturation_add(menu_select, *pot_select_delta, 0, MAX_MENU_STATE_VAL);
-    low_pass_val = saturation_add(low_pass_val, *pot_low_pass_delta, 0, 127);
     switch (menu_select) {
         case madsr:
             attack_val = saturation_add(attack_val, *pot_1_delta, MIN_ENVELOPE_VAL, MAX_ENVELOPE_VAL);
@@ -126,6 +134,10 @@ static void apply_deltas(int* pot_1_delta, int* pot_2_delta, int* pot_3_delta, i
             break;
         case mwave:
             wave_select_val = saturation_add(wave_select_val, *pot_1_delta, 0, 3);
+            if (*pot_2_delta) {
+                high_pass_val = saturation_add(high_pass_val, *pot_2_delta, 0, LEDC_DUTY_MAX_VAL);
+                apply_high_pass((uint8_t) high_pass_val);
+            }
 
             break;
         case msequencer_setup:
@@ -165,6 +177,16 @@ static void apply_deltas(int* pot_1_delta, int* pot_2_delta, int* pot_3_delta, i
         *pot_low_pass_delta =
         *pot_select_delta =
         0;
+}
+
+void apply_low_pass(uint8_t val_to_apply) {
+    ESP_ERROR_CHECK(ledc_set_duty(LEDC_MODE, LOW_PASS_LEDC_CHANNEL, val_to_apply));
+    ESP_ERROR_CHECK(ledc_update_duty(LEDC_MODE, LOW_PASS_LEDC_CHANNEL));
+}
+
+void apply_high_pass(uint8_t val_to_apply) {
+    ESP_ERROR_CHECK(ledc_set_duty(LEDC_MODE, HIGH_PASS_LEDC_CHANNEL, val_to_apply));
+    ESP_ERROR_CHECK(ledc_update_duty(LEDC_MODE, HIGH_PASS_LEDC_CHANNEL));
 }
 
 void task_adc() {
