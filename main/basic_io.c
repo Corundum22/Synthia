@@ -17,6 +17,7 @@
 #include "note_handler.h"
 #include "data_y_splitter.h"
 #include "global_header.h"
+#include "sequencer.h"
 
 
 
@@ -38,21 +39,10 @@ int_fast16_t wave_select_val = 1;
 int_fast16_t high_pass_val = DEFAULT_HIGH_PASS_VAL;
 
 // Sequencer setup values
-int_fast16_t sequencer_enable_val = 0;
-int_fast16_t sequencer_clear_val = 0;
-
-// Sequencer page 1 note values
-int_fast16_t squ_note_1_val = 0;
-int_fast16_t squ_note_2_val = 0;
-int_fast16_t squ_note_3_val = 0;
-int_fast16_t squ_note_4_val = 0;
-
-// Sequencer page 2 note values
-int_fast16_t squ_note_5_val = 0;
-int_fast16_t squ_note_6_val = 0;
-int_fast16_t squ_note_7_val = 0;
-int_fast16_t squ_note_8_val = 0;
-
+int_fast16_t squ_enable_val = 0;
+int_fast16_t squ_length_val = 0;
+int_fast16_t squ_tempo_val = 1;
+int_fast16_t squ_duration_val = 1;
 
 // Current channel state
 static adc_channel_t current_channel = MENU_POT_1;
@@ -141,22 +131,13 @@ static void apply_deltas(int* pot_1_delta, int* pot_2_delta, int* pot_3_delta, i
 
             break;
         case msequencer_setup:
-            sequencer_enable_val = saturation_add(sequencer_enable_val, *pot_1_delta, 0, 1);
-            sequencer_clear_val = saturation_add(sequencer_clear_val, *pot_2_delta, 0, 1);
-
-            break;
-        case msequencer_page_1:
-            squ_note_1_val = saturation_add(squ_note_1_val, *pot_1_delta, 0, 127);
-            squ_note_2_val = saturation_add(squ_note_2_val, *pot_2_delta, 0, 127);
-            squ_note_3_val = saturation_add(squ_note_3_val, *pot_3_delta, 0, 127);
-            squ_note_4_val = saturation_add(squ_note_4_val, *pot_4_delta, 0, 127);
-
-            break;
-        case msequencer_page_2:
-            squ_note_5_val = saturation_add(squ_note_5_val, *pot_1_delta, 0, 127);
-            squ_note_6_val = saturation_add(squ_note_6_val, *pot_2_delta, 0, 127);
-            squ_note_7_val = saturation_add(squ_note_7_val, *pot_3_delta, 0, 127);
-            squ_note_8_val = saturation_add(squ_note_8_val, *pot_4_delta, 0, 127);
+            squ_enable_val = saturation_add(squ_enable_val, *pot_1_delta, 0, 1);
+            squ_length_val = saturation_add(squ_length_val, *pot_2_delta, 0, SEQ_LEN);
+            if (*pot_2_delta) {
+                squ_tempo_val = saturation_add(squ_tempo_val, *pot_3_delta, 1, 255);
+                update_squ_timer(squ_tempo_val);
+            }
+            squ_duration_val = saturation_add(squ_duration_val, *pot_4_delta, 1, 255);
 
             break;
         default:

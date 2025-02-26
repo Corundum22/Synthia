@@ -2,6 +2,7 @@
 #define BASIC_IO_H_
 
 #include <stdint.h>
+#include "global_header.h"
 
 
 #define MIDI_PANIC_BUTTON       21
@@ -56,14 +57,6 @@
 #define MAX_MENU_STATE_VAL 4
 
 
-enum menu_state_t {
-    madsr = 0,
-    mwave = 1,
-    msequencer_setup = 2,
-    msequencer_page_1 = 3,
-    msequencer_page_2 = 4,
-} typedef menu_state;
-
 // Always accessible values
 extern menu_state menu_select;
 extern int_fast16_t low_pass_val;
@@ -76,22 +69,13 @@ extern int_fast16_t release_val;
 
 // Wave menu values
 extern int_fast16_t wave_select_val;
+extern int_fast16_t high_pass_val;
 
 // Sequencer setup values
-extern int_fast16_t sequencer_enable_val;
-extern int_fast16_t sequencer_clear_val;
-
-// Sequencer page 1 note values
-extern int_fast16_t squ_note_1_val;
-extern int_fast16_t squ_note_2_val;
-extern int_fast16_t squ_note_3_val;
-extern int_fast16_t squ_note_4_val;
-
-// Sequencer page 2 note values
-extern int_fast16_t squ_note_5_val;
-extern int_fast16_t squ_note_6_val;
-extern int_fast16_t squ_note_7_val;
-extern int_fast16_t squ_note_8_val;
+extern int_fast16_t squ_enable_val;
+extern int_fast16_t squ_length_val;
+extern int_fast16_t squ_tempo_val;
+extern int_fast16_t squ_duration_val;
 
 
 void task_adc();

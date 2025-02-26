@@ -2,6 +2,15 @@
 #define GLOBAL_HEADER_H_
 
 
+#include <stdbool.h>
+
+
+enum menu_state_t {
+    madsr = 0,
+    mwave = 1,
+    msequencer_setup = 2,
+} typedef menu_state;
+
 enum envelope_states_t {
     nothing,
     attack,
