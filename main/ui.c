@@ -56,15 +56,13 @@ void update_ui_cb(lv_timer_t* timer) {
             lv_label_set_text_fmt(menu_pot_1_text, "Sine: %d", wave_select_gui);
             lv_label_set_text_fmt(menu_pot_2_text, "Square: %d", 0);
             lv_label_set_text_fmt(menu_pot_3_text, "Sawtooth: %d", 0);
-            lv_label_set_text_fmt(menu_pot_4_text, "???: %d", 0);
+            lv_label_set_text_fmt(menu_pot_4_text, "High Pass: %d", high_pass_gui);
             break;
         case msequencer_setup:
-        //case msequencer_page_1:
-        //case msequencer_page_2:
-            lv_label_set_text_fmt(menu_pot_1_text, "PLACEHOLDER: %d", menu_select_gui);
-            lv_label_set_text_fmt(menu_pot_2_text, "PLACEHOLDER: %d", 0);
-            lv_label_set_text_fmt(menu_pot_3_text, "PLACEHOLDER: %d", 0);
-            lv_label_set_text_fmt(menu_pot_4_text, "PLACEHOLDER: %d", 0);
+            lv_label_set_text_fmt(menu_pot_1_text, "Enable: %d", squ_enable_gui);
+            lv_label_set_text_fmt(menu_pot_2_text, "Length: %d", squ_length_gui);
+            lv_label_set_text_fmt(menu_pot_3_text, "Tempo: %d", squ_tempo_gui);
+            lv_label_set_text_fmt(menu_pot_4_text, "Duration: %d", squ_duration_gui);
             break;
     }
 
