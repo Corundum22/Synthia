@@ -59,8 +59,8 @@ void update_ui_cb(lv_timer_t* timer) {
             lv_label_set_text_fmt(menu_pot_4_text, "???: %d", 0);
             break;
         case msequencer_setup:
-        case msequencer_page_1:
-        case msequencer_page_2:
+        //case msequencer_page_1:
+        //case msequencer_page_2:
             lv_label_set_text_fmt(menu_pot_1_text, "PLACEHOLDER: %d", menu_select_gui);
             lv_label_set_text_fmt(menu_pot_2_text, "PLACEHOLDER: %d", 0);
             lv_label_set_text_fmt(menu_pot_3_text, "PLACEHOLDER: %d", 0);
