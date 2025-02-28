@@ -85,6 +85,19 @@ void sequencer_timer_callback() {
             current_seq_index = 0;
         }
     }
+    else{
+        // If sequencer is disabled we want to start the programming mode... so put that here...
+        // This is where we will be able to program the sequencer
+
+
+        // how it works is when you come into this mode first it will start on the 0th index of the pattern array
+        // it will write the key you press to that index of the pattern array
+        // it will increment the index and wait for the next key press
+        // continue this until the index is at the knob value for the maximum pattern length, so squ_length_squ
+        // it will go back to the beginning from there because you might've made a mistake or something
+        // start playing from the beginning of the pattern when you enable the sequencer again
+        // have some way to enter rests... I think this could just be a very low midi value but I'm not sure
+    }
 }
 
 void update_squ_timer(int_fast16_t new_val) {
