@@ -23,10 +23,10 @@ void program_sequencer(uint_fast8_t key_num){
 //I'm gonna be honest I have no idea how getting data between stuff works...
 //are there going to be issues if I try to access the sequencer data from here? IDK!!!!!!!! AT ALL!!!!
     if(squ_enable_squ == 0) {
-        seq_pattern[current_seq_index] = key_num;
-        current_seq_index++;
-        if (current_seq_index >= squ_length_squ) {
-            current_seq_index = 0;
+        squ_pattern[current_squ_index] = key_num;
+        current_squ_index++;
+        if (current_squ_index >= squ_length_squ) {
+            current_squ_index = 0;
         }
     }
 }

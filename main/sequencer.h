@@ -13,9 +13,9 @@
 #define BPM_US_FACTOR              60000000
 
 
-extern int_fast8_t seq_pattern[SEQ_LEN];
+extern int_fast8_t squ_pattern[SEQ_LEN];
 
-extern int_fast8_t current_seq_index;
+extern int_fast8_t current_squ_index;
 
 
 void task_sequencer();

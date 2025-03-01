@@ -18,7 +18,7 @@
 
 // test_pattern is a temporary pattern of midi note numbers
 // intended only for testing sequencer_timer_callback
-uint_fast8_t squ_pattern[SEQ_LEN] = { 0, 7, 14, 21, 28, 35, 
+int_fast8_t squ_pattern[SEQ_LEN] = { 0, 7, 14, 21, 28, 35, 
     42, 49, 56, 63, 70, 77, 84, 91, 98, 105, 112, 119, 126, 
     6, 13, 20, 27, 34, 41, 48, 55, 62, 69, 76, 83, 90, 97, 104, 
     111, 118, 125, 5, 12, 19, 26, 33, 40, 47, 54, 61, 68, 75, 
