@@ -13,6 +13,11 @@
 #define BPM_US_FACTOR              60000000
 
 
+extern int_fast8_t seq_pattern[SEQ_LEN];
+
+extern int_fast8_t current_seq_index;
+
+
 void task_sequencer();
 void sequencer_timer_callback();
 void update_squ_timer(int_fast16_t new_val);

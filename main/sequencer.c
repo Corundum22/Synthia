@@ -18,7 +18,7 @@
 
 // test_pattern is a temporary pattern of midi note numbers
 // intended only for testing sequencer_timer_callback
-uint_fast8_t test_pattern[SEQ_LEN] = { 0, 7, 14, 21, 28, 35, 
+uint_fast8_t squ_pattern[SEQ_LEN] = { 0, 7, 14, 21, 28, 35, 
     42, 49, 56, 63, 70, 77, 84, 91, 98, 105, 112, 119, 126, 
     6, 13, 20, 27, 34, 41, 48, 55, 62, 69, 76, 83, 90, 97, 104, 
     111, 118, 125, 5, 12, 19, 26, 33, 40, 47, 54, 61, 68, 75, 
@@ -76,8 +76,8 @@ void task_sequencer() {
 void sequencer_timer_callback() {
 	// Execute if sequencer is enabled
     if (squ_enable_squ) {
-        set_squ_keyrelease(test_pattern[(current_seq_index + SEQ_LEN - 1) % SEQ_LEN]);
-        set_squ_keypress(test_pattern[current_seq_index]);
+        set_squ_keyrelease(squ_pattern[(current_seq_index + SEQ_LEN - 1) % SEQ_LEN]);
+        set_squ_keypress(squ_pattern[current_seq_index]);
 
         current_seq_index++;
 

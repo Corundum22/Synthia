@@ -18,6 +18,19 @@ note_data note_properties[NUM_VOICES + SEQ_VOICES] = {{
 
 esp_timer_handle_t envelope_timer_handle;
 
+void program_sequencer(uint_fast8_t key_num){
+
+//I'm gonna be honest I have no idea how getting data between stuff works...
+//are there going to be issues if I try to access the sequencer data from here? IDK!!!!!!!! AT ALL!!!!
+    if(squ_enable_squ == 0) {
+        seq_pattern[current_seq_index] = key_num;
+        current_seq_index++;
+        if (current_seq_index >= squ_length_squ) {
+            current_seq_index = 0;
+        }
+    }
+}
+
 
 void set_keypress(uint_fast8_t key_num) {
     for (int i = 0; i < NUM_VOICES; i++) {
@@ -34,6 +47,12 @@ void set_keypress(uint_fast8_t key_num) {
             note_properties[i].is_sounding = true;
             note_properties[i].envelope_state = attack;
             note_properties[i].note_num = key_num;
+
+
+            //no idea if this is good or will work or will kill everything.
+            program_sequencer(key_num);
+
+
 
             printf("Note has been turned on\n");
             return;
@@ -81,6 +100,7 @@ void set_squ_keyrelease(uint_fast8_t key_num) {
         }
     }
 }
+
 
 void envelope_timer_callback() {
     for (int i = 0; i < NUM_VOICES + SEQ_VOICES; i++) {
