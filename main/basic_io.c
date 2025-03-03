@@ -39,10 +39,10 @@ int_fast16_t wave_select_val = 1;
 int_fast16_t high_pass_val = DEFAULT_HIGH_PASS_VAL;
 
 // Sequencer setup values
-int_fast16_t squ_enable_val = 0;
-int_fast16_t squ_length_val = 0;
-int_fast16_t squ_tempo_val = 1;
-int_fast16_t squ_duration_val = 1;
+int_fast16_t squ_enable_val = 1;
+int_fast16_t squ_length_val = 64;
+int_fast16_t squ_tempo_val = 120;
+int_fast16_t squ_duration_val = 50;
 
 // Current channel state
 static adc_channel_t current_channel = MENU_POT_1;
