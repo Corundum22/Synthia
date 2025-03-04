@@ -8,6 +8,9 @@
 #define WHITE_SQUARE_BORDER lv_color_hex(0xB0B0B0)
 #define BLACK_SQUARE_BORDER lv_color_hex(0x606060)
 
+//TODO: add menu roller
+//      add key press visualizer
+
 #define DEMOMODE
 
 #ifdef DEMOMODE
