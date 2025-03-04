@@ -70,12 +70,16 @@ uint_fast8_t Aindex = 0;
 uint_fast8_t n = 0;
 uint_fast8_t squ_enable_old = -1;
 
-uint_fast8_t squ_test_pattern[] = { 0, 7, 14, 21, 28, 35, 
-    42, 49, 56, 63, 70, 77, 84, 91, 98, 105, 112, 119, 126, 
-    6, 13, 20, 27, 34, 41, 48, 55, 62, 69, 76, 83, 90, 97, 104, 
-    111, 118, 125, 5, 12, 19, 26, 33, 40, 47, 54, 61, 68, 75, 
-    82, 89, 96, 103, 110, 117, 124, 4, 11, 18, 25, 32, 39, 46, 
-    53, 60 };
+uint_fast8_t squ_test_pattern[] = {     
+    35, 35, 46, 46, 47, 47, 46, 46, //pop darling chapel roan's hot to go
+    35, 35, 46, 46, 47, 47, 46, 46,
+    35, 35, 46, 46, 47, 47, 46, 46,
+    35, 35, 46, 46, 47, 47, 46, 46,
+    39, 39, 50, 50, 51, 51, 50, 50,
+    39, 39, 50, 50, 51, 51, 50, 50,
+    39, 39, 50, 50, 51, 51, 50, 50,
+    39, 39, 50, 50, 51, 51, 50, 50
+};
 
 void update_ui_cb(lv_timer_t* timer) {
     
@@ -178,7 +182,7 @@ void update_ui_cb(lv_timer_t* timer) {
             }
             
             lv_label_set_text_fmt(progress_text, "Progress: %d/%d", Aindex+1, squ_length_gui);
-            lv_label_set_text(enable_text, squ_enable_gui ? "Playback Mode" : "Programming Mode");
+            lv_label_set_text(enable_text, squ_enable_gui ? "Programming Mode" : "Playback Mode");
             lv_label_set_text_fmt(length_text, "Length: %d", squ_length_gui);
             lv_label_set_text_fmt(tempo_text, "Tempo: %d", squ_tempo_gui);
             lv_label_set_text_fmt(duration_text, "Duration: %d%%", squ_duration_gui);
