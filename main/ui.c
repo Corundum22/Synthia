@@ -71,7 +71,7 @@ uint_fast8_t n = 0;
 uint_fast8_t squ_enable_old = -1;
 
 uint_fast8_t squ_test_pattern[] = {     
-    35, 35, 46, 46, 47, 47, 46, 46, //pop darling chapel roan's hot to go
+    35, 35, 46, 46, 47, 47, 46, 46, //pop darling chappell roan's HOT TO GO!
     35, 35, 46, 46, 47, 47, 46, 46,
     35, 35, 46, 46, 47, 47, 46, 46,
     35, 35, 46, 46, 47, 47, 46, 46,
