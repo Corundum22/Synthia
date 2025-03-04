@@ -22,6 +22,8 @@ void task_sequencer();
 void sequencer_timer_callback();
 void update_squ_timer(int_fast16_t new_val);
 void sequencer_timer_init();
+void pause_squ_timer();
+void resume_squ_timer(int_fast16_t us_val);
 
 
 #endif  // SEQUENCER_H_

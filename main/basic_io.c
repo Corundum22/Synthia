@@ -131,9 +131,16 @@ static void apply_deltas(int* pot_1_delta, int* pot_2_delta, int* pot_3_delta, i
 
             break;
         case msequencer_setup:
-            squ_enable_val = saturation_add(squ_enable_val, *pot_1_delta, 0, 1);
+            if (*pot_1_delta) {
+                squ_enable_val = saturation_add(squ_enable_val, *pot_1_delta, 0, 1);
+                if (squ_enable_val) {
+                    resume_squ_timer(squ_tempo_val);
+                } else {
+                    pause_squ_timer();
+                }
+            }
             squ_length_val = saturation_add(squ_length_val, *pot_2_delta, 0, SEQ_LEN);
-            if (*pot_2_delta) {
+            if (*pot_3_delta) {
                 squ_tempo_val = saturation_add(squ_tempo_val, *pot_3_delta, 1, 255);
                 update_squ_timer(squ_tempo_val);
             }

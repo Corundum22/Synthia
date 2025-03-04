@@ -105,6 +105,15 @@ void update_squ_timer(int_fast16_t new_val) {
     ESP_ERROR_CHECK(esp_timer_restart(sequencer_timer_handle, us_new_val));
 }
 
+void pause_squ_timer() {
+    ESP_ERROR_CHECK(esp_timer_stop(sequencer_timer_handle));
+}
+
+void resume_squ_timer(int_fast16_t us_val) {
+    uint64_t us_new_val = BPM_US_FACTOR / (us_val * TEMPO_PERIOD_MULTIPLIER);
+    ESP_ERROR_CHECK(esp_timer_start_periodic(sequencer_timer_handle, us_new_val));
+}
+
 void sequencer_timer_init() {
     const esp_timer_create_args_t sequencer_timer_args = {
         .callback = &sequencer_timer_callback,
