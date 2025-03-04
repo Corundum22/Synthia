@@ -18,7 +18,6 @@ extern int_fast8_t squ_pattern[SEQ_LEN];
 extern int_fast8_t current_squ_index;
 
 
-void task_sequencer();
 void sequencer_timer_callback();
 void update_squ_timer(int_fast16_t new_val);
 void sequencer_timer_init();

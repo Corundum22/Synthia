@@ -39,7 +39,7 @@ int_fast16_t wave_select_val = 1;
 int_fast16_t high_pass_val = DEFAULT_HIGH_PASS_VAL;
 
 // Sequencer setup values
-int_fast16_t squ_enable_val = 1;
+int_fast16_t squ_enable_val = 0;
 int_fast16_t squ_length_val = 64;
 int_fast16_t squ_tempo_val = 120;
 int_fast16_t squ_duration_val = 50;
@@ -131,8 +131,8 @@ static void apply_deltas(int* pot_1_delta, int* pot_2_delta, int* pot_3_delta, i
 
             break;
         case msequencer_setup:
-            if (*pot_1_delta) {
-                squ_enable_val = saturation_add(squ_enable_val, *pot_1_delta, 0, 1);
+            if (*pot_1_delta != 0) {
+                squ_enable_val = !squ_enable_val;
                 if (squ_enable_val) {
                     resume_squ_timer(squ_tempo_val);
                 } else {

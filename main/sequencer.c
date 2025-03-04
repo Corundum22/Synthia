@@ -66,13 +66,6 @@ esp_timer_handle_t sequencer_timer_handle;
 int_fast8_t current_seq_index = 0;
 
 
-void task_sequencer() {
-    while (1) {
-        // TODO: make this useful
-        vTaskDelay(pdMS_TO_TICKS(1000));
-    }
-}
-
 void sequencer_timer_callback() {
 	// Execute if sequencer is enabled
     if (squ_enable_squ) {
@@ -107,6 +100,7 @@ void update_squ_timer(int_fast16_t new_val) {
 
 void pause_squ_timer() {
     ESP_ERROR_CHECK(esp_timer_stop(sequencer_timer_handle));
+    set_squ_keyrelease(squ_pattern[(current_seq_index + SEQ_LEN - 1) % SEQ_LEN]);
 }
 
 void resume_squ_timer(int_fast16_t us_val) {
@@ -121,5 +115,5 @@ void sequencer_timer_init() {
     };
 
     ESP_ERROR_CHECK(esp_timer_create(&sequencer_timer_args, &sequencer_timer_handle));
-    ESP_ERROR_CHECK(esp_timer_start_periodic(sequencer_timer_handle, DEFAULT_SQU_TEMPO_US));
+    //ESP_ERROR_CHECK(esp_timer_start_periodic(sequencer_timer_handle, DEFAULT_SQU_TEMPO_US));
 }
