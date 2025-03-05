@@ -83,7 +83,7 @@ void task_audio_generate() {
         #endif
 
         
-        if (times_added != 0) data /= times_added;
+        if (times_added != 0) data /= 30;
 
         ESP_ERROR_CHECK(dac_oneshot_output_voltage(lower_dac_handle, (uint8_t) data));
         ESP_ERROR_CHECK(dac_oneshot_output_voltage(upper_dac_handle, (uint8_t) (data >> 8)));

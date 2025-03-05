@@ -5,6 +5,8 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/semphr.h"
 #include "global_header.h"
+#include "note_handler.h"
+#include "sequencer.h"
 
 
 extern SemaphoreHandle_t guiSemaphore; // protects the copied data to be used by the gui
@@ -44,6 +46,9 @@ extern int_fast16_t squ_enable_gui;
 extern int_fast16_t squ_length_gui;
 extern int_fast16_t squ_tempo_gui;
 extern int_fast16_t squ_duration_gui;
+
+// GUI note data
+extern note_data note_properties_gui[NUM_VOICES + SEQ_VOICES];
 
 
 void data_split_init();

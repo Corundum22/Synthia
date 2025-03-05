@@ -19,6 +19,7 @@
 
 
 extern note_data note_properties[NUM_VOICES + SEQ_VOICES];
+extern note_data note_properties_slow[NUM_VOICES + SEQ_VOICES];
 
 void set_keypress(uint_fast8_t key_num);
 void set_keyrelease(uint_fast8_t key_num);

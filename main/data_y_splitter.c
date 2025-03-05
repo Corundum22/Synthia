@@ -8,6 +8,7 @@
 #include "data_y_splitter.h"
 #include "freertos/task.h"
 #include "global_header.h"
+#include "sequencer.h"
 
 SemaphoreHandle_t guiSemaphore; // protects the copied data to be used by the gui
 SemaphoreHandle_t ySplitterSemaphore; // protects the original data sources
@@ -49,10 +50,20 @@ int_fast16_t squ_length_gui = 0;
 int_fast16_t squ_tempo_gui = 1;
 int_fast16_t squ_duration_gui = 1;
 
+// GUI note data
+note_data note_properties_gui[NUM_VOICES + SEQ_VOICES] = {{
+    is_pressed: false,
+    is_sounding: false,
+    envelope_state: nothing,
+    note_num: 0,
+    multiplier: MIN_ENVELOPE_VAL,
+}};
+
 static void copy_gui();
 static void copy_squ();
 static void copy_nh();
 static void copy_syn();
+static inline void note_data_deep_copy();
 
 
 
@@ -87,6 +98,7 @@ static void copy_gui() {
     squ_length_gui = squ_length_val;
     squ_tempo_gui = squ_tempo_val;
     squ_duration_gui = squ_duration_val;
+    note_data_deep_copy();
 
     xSemaphoreGive(guiSemaphore);
 }
@@ -107,4 +119,10 @@ static void copy_nh() {
 
 static void copy_syn() {
     wave_select_syn = wave_select_val;
+}
+
+static inline void note_data_deep_copy() {
+    for (int i = 0; i < NUM_VOICES + SEQ_VOICES; i++) {
+        note_properties_gui[i] = note_properties_slow[i];
+    }
 }
