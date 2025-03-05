@@ -25,11 +25,6 @@ dac_oneshot_handle_t lower_dac_handle;
 dac_oneshot_handle_t upper_dac_handle;
 gptimer_handle_t wave_gen_timer;
 
-extern const uint32_t sin_array[];
-extern const uint32_t ratio_num[];
-extern const uint32_t ratio_denom[];
-extern const uint32_t sawtooth_array[];
-
 
 static inline uint_fast32_t wave(uint_fast8_t midi_note_number, uint_fast16_t multiply_val, uint_fast32_t time) {
     uint_fast32_t ratio_numerator = ratio_num[midi_note_number];
@@ -82,8 +77,8 @@ void task_audio_generate() {
             GET_NOTE(9)
         #endif
 
-        
-        if (times_added != 0) data /= 30;
+        // TODO: uncomment to prevent clipping with multiple voices active
+        //if (times_added != 0) data /= (NUM_VOICES + SEQ_VOICES);
 
         ESP_ERROR_CHECK(dac_oneshot_output_voltage(lower_dac_handle, (uint8_t) data));
         ESP_ERROR_CHECK(dac_oneshot_output_voltage(upper_dac_handle, (uint8_t) (data >> 8)));
