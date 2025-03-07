@@ -2,15 +2,13 @@ from math import *
 from fractions import Fraction
 
 MAX_LINE_LEN = 60
-NUM_VALUES = 64
-STARTING_LINE = "uint_fast8_t test_pattern[SEQ_LEN] = { "
+NUM_VALUES = 256
+STARTING_LINE = "uint_fast16_t sin_array[] = { "
 LEFT_SPACES = 4
 
 
 def func_to_apply(x):
-    return (x * 7) % 127
-#def func_to_apply(x):
-#    return int((2**16 / 2) * (1 + sin(2 * pi * x / NUM_VALUES)))
+    return int((2**16 / 2) * (1 + sin(2 * pi * x / NUM_VALUES)))
 #def func_to_apply(x):
 #    if (x < 128):
 #        current_freq = 440 * 2**((x - 69) / 12)
