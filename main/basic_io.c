@@ -246,7 +246,10 @@ void gpio_interrupt_handler(void *args) {
     int gpio_num = (int) args;
     switch (gpio_num) {
         case MIDI_PANIC_BUTTON:
-            for (int i = 0; i < NUM_VOICES; i++) note_properties[i].is_sounding = false;
+            for (int i = 0; i < NUM_VOICES; i++) {
+                note_properties[i].is_sounding = false;
+                note_properties[i].is_pressed = false;
+            }
 
             // Test for PWM signals
             ESP_ERROR_CHECK(ledc_set_duty(LEDC_MODE, STATUS_LEDC_CHANNEL, 0b00111111));

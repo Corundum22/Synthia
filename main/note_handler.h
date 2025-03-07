@@ -11,7 +11,8 @@
 #define ENVELOPE_TRIGGER_PERIOD_US    10000
 
 #define MAX_ENVELOPE_VAL    0xFF
-#define MIN_ENVELOPE_VAL    0x01
+#define MIN_ENVELOPE_VAL    0x00
+#define LOW_ENVELOPE_VAL    0x01
 
 #define DECAY_LEVEL         170
 

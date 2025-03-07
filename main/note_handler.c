@@ -44,13 +44,16 @@ void program_sequencer(uint_fast8_t key_num){
 
 
 void set_keypress(uint_fast8_t key_num) {
+
+    // Prevent unison keypresses from retriggering a note
     for (int i = 0; i < NUM_VOICES; i++) {
         if (note_properties[i].note_num == key_num && note_properties[i].is_pressed == true) {
-            printf("Unison note rejected\n");
             return; // return without doing anything if the key is already pressed
                     // i.e. no unison keys
         }
     }
+
+    // Trigger the note so long as there is at least one voice not being pressed
     for (int i = 0; i < NUM_VOICES; i++) {
         if (note_properties[i].is_pressed == false) {
 
@@ -64,7 +67,6 @@ void set_keypress(uint_fast8_t key_num) {
             program_sequencer(key_num);
 
 
-            printf("Note has been turned on\n");
             return;
         }
     }
@@ -75,6 +77,7 @@ void set_keyrelease(uint_fast8_t key_num) {
         if (note_properties[i].note_num == key_num && note_properties[i].is_pressed == true) {
             note_properties[i].is_pressed = false;
             note_properties[i].envelope_state = release;
+            note_properties[i].multiplier = MIN_ENVELOPE_VAL;
         }
     }
 }
@@ -83,7 +86,6 @@ void set_keyrelease(uint_fast8_t key_num) {
 void set_squ_keypress(uint_fast8_t key_num) {
     for (int i = NUM_VOICES; i < NUM_VOICES + SEQ_VOICES; i++) {
         if (note_properties[i].note_num == key_num && note_properties[i].is_sounding == true) {
-            printf("Unison note rejected\n");
             return; // return without doing anything if the key is already pressed
                     // i.e. no unison keys
         }
@@ -96,7 +98,6 @@ void set_squ_keypress(uint_fast8_t key_num) {
             note_properties[i].envelope_state = attack;
             note_properties[i].note_num = key_num;
 
-            printf("Sequencer note has been turned on\n");
             return;
         }
     }
@@ -137,8 +138,8 @@ void envelope_timer_callback() {
                     break;
                 case release:
                     int temp_val = (int) note_properties[i].multiplier - release_nh;
-                    if (temp_val < MIN_ENVELOPE_VAL) {
-                        note_properties[i].multiplier = MIN_ENVELOPE_VAL;
+                    if (temp_val < LOW_ENVELOPE_VAL) {
+                        note_properties[i].multiplier = LOW_ENVELOPE_VAL;
                         note_properties[i].is_sounding = false;
                         note_properties[i].envelope_state = nothing;
                     }
@@ -146,7 +147,7 @@ void envelope_timer_callback() {
                     break;
                 default:
                     note_properties[i].envelope_state = nothing;
-                    note_properties[i].multiplier = MIN_ENVELOPE_VAL;
+                    note_properties[i].multiplier = LOW_ENVELOPE_VAL;
                     note_properties[i].is_sounding = false;
                     break;
             }

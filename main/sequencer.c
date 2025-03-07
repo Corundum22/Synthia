@@ -19,6 +19,22 @@
 // test_pattern is a temporary pattern of midi note numbers
 // intended only for testing sequencer_timer_callback
 int_fast8_t squ_pattern[SEQ_LEN] = {     
+    60, 60, 60, 60, 60, 
+    65, 65, 65, 65, 65, 
+    69, 69, 69, 69, 69, 
+    60, 60, 60, 60, 60, 
+    65, 65, 65, 65, 65, 
+    69, 69, 69, 69, 69, 
+    60, 60, 60, 60, 60, 
+    65, 65, 65, 65, 65, 
+    69, 69, 69, 69, 69, 
+    60, 60, 60, 60, 60, 
+    65, 65, 65, 65, 65, 
+    69, 69, 69, 69, 69, 
+    60, 60, 60, 60, 
+    };
+
+int_fast8_t squ_basic_pattern[SEQ_LEN] = {     
     50, 50, 50, 50, 50, 
     50, 50, 50, 50, 50, 
     50, 50, 50, 50, 50, 
@@ -122,5 +138,4 @@ void sequencer_timer_init() {
     };
 
     ESP_ERROR_CHECK(esp_timer_create(&sequencer_timer_args, &sequencer_timer_handle));
-    //ESP_ERROR_CHECK(esp_timer_start_periodic(sequencer_timer_handle, DEFAULT_SQU_TEMPO_US));
 }

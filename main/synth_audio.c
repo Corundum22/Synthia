@@ -26,13 +26,13 @@ dac_oneshot_handle_t upper_dac_handle;
 gptimer_handle_t wave_gen_timer;
 
 
-static inline uint_fast32_t wave(uint_fast8_t midi_note_number, uint_fast16_t multiply_val, uint_fast32_t time) {
+static inline int_fast32_t wave(uint_fast8_t midi_note_number, uint_fast16_t multiply_val, uint_fast32_t time) {
     uint_fast32_t ratio_numerator = ratio_num[midi_note_number];
     uint_fast32_t ratio_denominator = ratio_denom[midi_note_number];
 
     uint_fast32_t point_in_cycle = ((time * ratio_numerator) / ratio_denominator) & 0b11111111;
 
-    uint_fast32_t result = sin_array[point_in_cycle];
+    int_fast32_t result = (int_fast32_t) sin_array[point_in_cycle];
     result = (result * multiply_val) >> MULTIPLIER_WIDTH;
 
     return result;
@@ -43,7 +43,7 @@ void task_audio_generate() {
         uint64_t time;
         gptimer_get_raw_count(wave_gen_timer, &time);
 
-        uint32_t data = 0;
+        int16_t data = 0;
         uint_fast8_t times_added = 0;
 
         #if NUM_COMB_VOICES >= 1
@@ -79,9 +79,11 @@ void task_audio_generate() {
 
         // TODO: uncomment to prevent clipping with multiple voices active
         //if (times_added != 0) data /= (NUM_VOICES + SEQ_VOICES);
+        
+        uint32_t unsigned_data = ((uint16_t) data) + 0b0111111111111111;
 
-        ESP_ERROR_CHECK(dac_oneshot_output_voltage(lower_dac_handle, (uint8_t) data));
-        ESP_ERROR_CHECK(dac_oneshot_output_voltage(upper_dac_handle, (uint8_t) (data >> 8)));
+        ESP_ERROR_CHECK(dac_oneshot_output_voltage(lower_dac_handle, (uint8_t) unsigned_data));
+        ESP_ERROR_CHECK(dac_oneshot_output_voltage(upper_dac_handle, (uint8_t) (unsigned_data >> 8)));
     }
 }
 
