@@ -34,9 +34,6 @@ static void task_create() {
 }
 
 static void exec_init() {
-    wave_timer_init();
-    printf("Wave timer init finished\n");
-
     envelope_timer_init();
     printf("Envelope timer init finished\n");
 
