@@ -7,8 +7,10 @@
 
 #define DAC_LOWER_CHANNEL DAC_CHANNEL_MASK_CH0
 #define DAC_UPPER_CHANNEL DAC_CHANNEL_MASK_CH1
-#define AUDIO_BUF_SIZE 1024
-#define OUTPUT_SAMPLE_RATE 44100
+
+#define AUDIO_BUF_SIZE        1024
+#define OUTPUT_SAMPLE_RATE    44100
+#define NUM_DAC_CHANNELS      2
 
 
 void task_audio_generate();

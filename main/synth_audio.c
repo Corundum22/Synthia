@@ -85,8 +85,6 @@ static inline uint16_t audio_sample_get(uint32_t time) {
     //ESP_ERROR_CHECK(dac_oneshot_output_voltage(upper_dac_handle, (uint8_t) (unsigned_data >> 8)));
 }
 
-#define AUDIO_CHUNK_SIZE 256
-#define NUM_DAC_CHANNELS 2
 
 static uint8_t data_array[AUDIO_BUF_SIZE * NUM_DAC_CHANNELS];
 void task_audio_generate() {
@@ -109,15 +107,6 @@ void task_audio_generate() {
 
         ESP_ERROR_CHECK(dac_continuous_write(dac_handle, data_array, AUDIO_BUF_SIZE * NUM_DAC_CHANNELS, NULL, -1));
    
-
-        /*while (uxQueueSpacesAvailable(dac_event_queue) == 0) {
-            vTaskDelay(pdMS_TO_TICKS(1));
-        }*/
-
-        /*for (int i = 0; i < 4; i++) {
-            xQueueReceive(dac_event_queue, &event_data, portMAX_DELAY);
-            memset(event_data.buf, 0, event_data.buf_size);
-        }*/
         vTaskDelay(pdMS_TO_TICKS(1));
 
     }
