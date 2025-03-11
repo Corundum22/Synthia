@@ -3,13 +3,23 @@
 #include "basic_io.h"
 #include "data_y_splitter.h"
 #include "ui.h"
+#include <math.h> //TODO
 
 #define WHITE_SQUARE_BORDER lv_color_hex(0xB0B0B0)
 #define BLACK_SQUARE_BORDER lv_color_hex(0x606060)
 
-//TODO: add menu roller
-//      add key press visualizer
-//      add note playing in the top left
+
+/*
+TODO:   add menu roller
+        add key press visualizer
+        add note playing in the top left..?
+        fix bar limits
+
+ASK:    what are the limits for the bars (ADSR/Sin/Squ/etc) j
+        how high can note_data's multiplier get j
+        what the seq's interface is gonna look like f
+        what top left will do j
+*/
 
 const int SCREEN_WIDTH = 320;
 const int SCREEN_HEIGHT = 480;
@@ -35,8 +45,11 @@ const int MENU_INNER_PADDING = 15;
 lv_obj_t* menu[4];
 lv_obj_t* menu_text[4];
 lv_obj_t* menu_bar[4];
-lv_obj_t* low_pass_text   = NULL;
-lv_obj_t* low_pass_bar    = NULL;
+lv_obj_t* button_panel;
+lv_obj_t* button_text;
+
+static lv_style_t bar_bg_style;
+static lv_style_t bar_ind_style;
 
 
 //SQU
@@ -61,11 +74,23 @@ char midi_note_name[] = {'a','b','c','d','\0'};
 uint_fast8_t squ_enable_old = -1;
 
 //VIZ
+#define NUM_BARS 20
+const int VIZ_PADDING = 2;
+const int BAR_HEIGHT = (VIZ_HEIGHT - NUM_BARS*9) / NUM_BARS;
+
+const int freq_bands[NUM_BARS + 1] = {
+    20, 29, 40, 56, 80, 112, 159, 224, 317, 448,
+    632, 893, 1262, 1783, 2518, 3557, 5024, 7096,
+    10024, 14159, 20000
+};
 
 lv_obj_t* viz_panel       = NULL;
 
+lv_obj_t* bars[NUM_BARS];
+uint16_t bar_vals[NUM_BARS];
+
 uint_fast8_t squ_test_pattern[] = {     
-    35, 35, 46, 46, 47, 47, 46, 46, //pop darling chappell roan's HOT TO GO!
+    35, 35, 46, 46, 47, 47, 46, 46,
     35, 35, 46, 46, 47, 47, 46, 46,
     35, 35, 46, 46, 47, 47, 46, 46,
     35, 35, 46, 46, 47, 47, 46, 46,
@@ -93,8 +118,8 @@ void update_ui_cb(lv_timer_t* timer) {
             lv_bar_set_value(menu_bar[2], sustain_gui, LV_ANIM_OFF);
             lv_bar_set_value(menu_bar[3], release_gui, LV_ANIM_OFF);
 
-            lv_label_set_text_fmt(low_pass_text, "Low-Pass:\n%d", low_pass_gui);
-            lv_bar_set_value(low_pass_bar, low_pass_gui, LV_ANIM_OFF);
+            update_visualizer();
+            update_top_left();
             break;
 
         case mwave:
@@ -109,8 +134,8 @@ void update_ui_cb(lv_timer_t* timer) {
             lv_bar_set_value(menu_bar[2], 3, LV_ANIM_OFF);
             lv_bar_set_value(menu_bar[3], 4, LV_ANIM_OFF);
                     
-            lv_label_set_text_fmt(low_pass_text, "Low-Pass:\n%d", low_pass_gui);
-            lv_bar_set_value(low_pass_bar, low_pass_gui, LV_ANIM_OFF);
+            update_visualizer();
+            update_top_left();
             break;
 
         case msequencer_setup:
@@ -169,8 +194,7 @@ void update_ui_cb(lv_timer_t* timer) {
     }
 }
 
-void create_menu()
-{
+void create_menu() {
     curr_scr = scr0 = lv_scr_act();
 
     // Set screen background color
@@ -180,14 +204,20 @@ void create_menu()
     create_visualizer();
 
     // Create button panel
-    lv_obj_t* button_panel = lv_obj_create(scr0);
+    button_panel = lv_obj_create(scr0);
     lv_obj_set_size(button_panel, LEFT_PANEL_WIDTH, BUTTON_HEIGHT);
     lv_obj_set_pos(scr0, 0, 0);
     generic_obj_format(button_panel, lv_color_white());
 
+    button_text = lv_label_create(button_panel);
+    generic_txt_format(button_text, lv_color_black());
+
+
     // Create menu panels
     for(int i = 0; i < 4; i++){
         menu[i] = lv_obj_create(scr0);
+
+        
         lv_obj_set_size(menu[i], RIGHT_PANEL_WIDTH, MENU_HEIGHT);
         lv_obj_set_pos(menu[i], LEFT_PANEL_WIDTH, MENU_HEIGHT*i);
 
@@ -196,11 +226,17 @@ void create_menu()
 
         menu_text[i] = lv_label_create(menu[i]);
         generic_txt_format(menu_text[i], i%2 ? lv_color_black() : lv_color_white());
+        
 
         menu_bar[i] = lv_bar_create(menu[i]);
+
+        lv_obj_remove_style_all(menu_bar[i]);
+
         // TODO: adjust limits
         lv_obj_set_size(menu_bar[i], MENU_BAR_WIDTH, MENU_BAR_HEIGHT);
         lv_bar_set_value(menu_bar[i], 0, LV_ANIM_OFF);
+
+        bar_style(menu_bar[i], &bar_bg_style, &bar_ind_style);
     }
 
 }
@@ -269,21 +305,72 @@ void create_squ(){
     }
 }
 
+void update_top_left(){
+    int num = 127;
+    for(uint_fast8_t i = 0; i < NUM_VOICES + SEQ_VOICES; i++){
+        if(note_properties_gui[i].is_sounding){
+            num = note_properties_gui[i].note_num;
+            break;
+        }
+    }
+    update_midi_note_name(num);
+    lv_label_set_text_fmt(button_text, "%s", midi_note_name);
+}
+
+void update_visualizer(){
+
+
+    for(int i = 0; i < NUM_BARS; i++){
+        lv_bar_set_value(bars[i], 0, LV_ANIM_OFF);
+    }
+
+    for(int i = 0; i < NUM_VOICES + SEQ_VOICES; i++){
+        if(note_properties_gui[i].is_sounding){
+            uint16_t freq = get_freq(note_properties_gui[i].note_num);
+            uint_fast8_t band = get_band(freq);
+            if(band > 0){
+                lv_bar_set_value(bars[band], 100, LV_ANIM_OFF);
+            }
+        }
+    }
+}
+
+uint_fast8_t get_band(uint16_t freq){
+    for(uint_fast8_t i = 0; i < NUM_BARS; i++){
+        if(freq >= freq_bands[i] && freq < freq_bands[i+1]){
+            return i; // todo: lookup table
+        }
+    }
+    return -1;
+}
+
+uint16_t get_freq(uint_fast8_t note_num){
+    return 440 * (pow(2, note_num-69) / 12); // todo: lookup table
+};
+
 void create_visualizer(){
+
     viz_panel = lv_obj_create(scr0);
     lv_obj_set_size(viz_panel, LEFT_PANEL_WIDTH, VIZ_HEIGHT);
     lv_obj_set_pos(viz_panel, 0, BUTTON_HEIGHT);
 
     generic_obj_format(viz_panel, lv_color_black());
+    //lv_obj_set_style_pad_all(viz_panel, PADDING_WIDTH-3, LV_PART_MAIN | LV_STATE_DEFAULT);
     flex_column(viz_panel);
 
-    low_pass_text = lv_label_create(viz_panel);
-    lv_obj_set_style_text_color(low_pass_text, lv_color_white(), LV_PART_MAIN);
-    lv_obj_set_style_text_align(low_pass_text, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN | LV_STATE_DEFAULT);
+    for(int i = 0; i < NUM_BARS; i++){
+        bars[i] = lv_bar_create(viz_panel);
+        lv_obj_set_size(bars[i], LEFT_PANEL_WIDTH - BORDER_WIDTH*2 - VIZ_PADDING*2, BAR_HEIGHT);
+        lv_obj_set_pos(bars[i], 0, VIZ_HEIGHT + BAR_HEIGHT*i);
+    }
 
-    low_pass_bar = lv_bar_create(viz_panel);
-    lv_obj_set_size(low_pass_bar, LOW_PASS_BAR_WIDTH, LOW_PASS_BAR_HEIGHT);
-    lv_bar_set_value(low_pass_bar, 0, LV_ANIM_OFF);
+    //low_pass_text = lv_label_create(viz_panel);
+    //lv_obj_set_style_text_color(low_pass_text, lv_color_white(), LV_PART_MAIN);
+    //lv_obj_set_style_text_align(low_pass_text, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN | LV_STATE_DEFAULT);
+
+    //low_pass_bar = lv_bar_create(viz_panel);
+    //lv_obj_set_size(low_pass_bar, LOW_PASS_BAR_WIDTH, LOW_PASS_BAR_HEIGHT);
+    //lv_bar_set_value(low_pass_bar, 0, LV_ANIM_OFF);
 }
 
 void generic_obj_format(lv_obj_t* o, lv_color_t c){
@@ -297,6 +384,31 @@ void generic_obj_format(lv_obj_t* o, lv_color_t c){
     } else{
         lv_obj_set_style_border_color(o, lv_color_hex(0x00FF00), LV_PART_MAIN | LV_STATE_DEFAULT);
     }
+}
+
+void bar_style(lv_obj_t* bar, lv_style_t* bg, lv_style_t* ind){
+
+    lv_color_t inner_color = lv_color_hex(0x822E28);
+    lv_color_t outer_color = lv_color_hex(0xCC483F); //BGR
+    
+    //lv_obj_set_style_bg_color(bar, lv_palette_main(LV_PALETTE_BLUE), LV_PART_MAIN);
+    
+    //border
+    lv_style_init(bg);
+    lv_style_set_border_color(bg, outer_color);
+    lv_style_set_border_width(bg, 4);
+    lv_style_set_pad_all(bg, 7); // BW+3
+    lv_style_set_radius(bg, 18);
+    //lv_style_set_anim_duration(&style_bg, 1000);
+
+    //inside
+    lv_style_init(ind);
+    lv_style_set_bg_opa(ind, LV_OPA_COVER);
+    lv_style_set_bg_color(ind, inner_color);
+    lv_style_set_radius(ind, 18);
+
+    lv_obj_add_style(bar, bg, 0);
+    lv_obj_add_style(bar, ind, LV_PART_INDICATOR);
 }
 
 void generic_txt_format(lv_obj_t* t, lv_color_t c){
