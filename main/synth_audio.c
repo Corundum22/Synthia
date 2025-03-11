@@ -95,11 +95,11 @@ void task_audio_generate() {
 
         dac_event_data_t event_data;
  
-        for (uint_fast16_t i = 0; i < AUDIO_BUF_SIZE; i++) {
+        for (uint_fast16_t i = 0; i < AUDIO_BUF_SIZE * NUM_DAC_CHANNELS; i += 2) {
             uint16_t data = audio_sample_get(time);
             
-            data_array[i * 2] = (uint8_t) data;
-            data_array[(i * 2) + 1] = (uint8_t) (data >> 8);
+            data_array[i] = (uint8_t) data;
+            data_array[i + 1] = (uint8_t) (data >> 8);
         
             time++;
         }
@@ -107,7 +107,6 @@ void task_audio_generate() {
 
         ESP_ERROR_CHECK(dac_continuous_write(dac_handle, data_array, AUDIO_BUF_SIZE * NUM_DAC_CHANNELS, NULL, -1));
    
-        vTaskDelay(pdMS_TO_TICKS(1));
 
     }
 }
