@@ -335,7 +335,7 @@ void update_visualizer(){
     for(int i = 0; i < NUM_VOICES + SEQ_VOICES; i++){
         if(note_properties_gui[i].is_sounding){
             uint16_t freq = freq_notes[note_properties_gui[i].note_num];
-            uint_fast8_t band = get_band(freq);
+            uint_fast8_t band = get_band(note_properties_gui[i].note_num);
             if(band > 0){
                 lv_bar_set_value(bars[band], note_properties_gui[i].multiplier, LV_ANIM_OFF);
             }
