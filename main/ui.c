@@ -139,7 +139,7 @@ void update_ui_cb(lv_timer_t* timer) {
         case msequencer_setup:
             if(curr_scr != scr1){lv_scr_load(scr1); curr_scr = scr1;}
             
-            if(squ_enable_gui==0){
+            if(squ_enable_gui){
                 // Playback Mode
 
                 //Update playback pattern
