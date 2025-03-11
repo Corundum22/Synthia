@@ -49,6 +49,7 @@ int_fast16_t squ_enable_gui = 0;
 int_fast16_t squ_length_gui = 0;
 int_fast16_t squ_tempo_gui = 1;
 int_fast16_t squ_duration_gui = 1;
+int_fast16_t squ_index_gui = 0;
 
 // GUI note data
 note_data note_properties_gui[NUM_VOICES + SEQ_VOICES] = {{
@@ -99,6 +100,8 @@ static void copy_gui() {
     squ_tempo_gui = squ_tempo_val;
     squ_duration_gui = squ_duration_val;
     note_data_deep_copy();
+
+    squ_index_gui = current_squ_index;
 
     xSemaphoreGive(guiSemaphore);
 }

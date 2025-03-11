@@ -47,6 +47,9 @@ extern int_fast16_t squ_length_gui;
 extern int_fast16_t squ_tempo_gui;
 extern int_fast16_t squ_duration_gui;
 
+// GUI sequencer running values
+extern int_fast16_t squ_index_gui;
+
 // GUI note data
 extern note_data note_properties_gui[NUM_VOICES + SEQ_VOICES];
 
