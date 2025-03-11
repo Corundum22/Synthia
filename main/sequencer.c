@@ -18,7 +18,7 @@
 
 // test_pattern is a temporary pattern of midi note numbers
 // intended only for testing sequencer_timer_callback
-int_fast8_t squ_pattern[SEQ_LEN] = {     
+uint_fast8_t squ_pattern_weird[SEQ_LEN] = {     
     60, 60, 60, 60, 60, 
     65, 65, 65, 65, 65, 
     69, 69, 69, 69, 69, 
@@ -34,7 +34,7 @@ int_fast8_t squ_pattern[SEQ_LEN] = {
     60, 60, 60, 60, 
     };
 
-int_fast8_t squ_basic_pattern[SEQ_LEN] = {     
+uint_fast8_t squ_basic_pattern[SEQ_LEN] = {     
     50, 50, 50, 50, 50, 
     50, 50, 50, 50, 50, 
     50, 50, 50, 50, 50, 
@@ -48,18 +48,19 @@ int_fast8_t squ_basic_pattern[SEQ_LEN] = {
     50, 50, 50, 50, 50, 50, 50,
     };
 
-uint_fast8_t test_pattern_JOLT[SEQ_LEN] = { 
-    56, 47, 52, 54, 59, 
-    56, 47, 52, 54, 59, 
-    56, 47, 52, 54, 59, 
-    56, 47, 52, 54, 
-    56, 54, 52, 47, 52, 54,
-    56, 54, 52, 47, 52, 54,
-    56, 54, 52, 47, 52, 54, 59,
-    56, 47, 52, 54,
-    56, 54, 52, 45, 52, 54,
-    56, 54, 52, 45, 52, 54,
-    56, 54, 52, 45, 49, 52, 54
+//uint_fast8_t test_pattern_JOLT[SEQ_LEN] = { 
+int_fast8_t squ_pattern[SEQ_LEN] = { 
+    80, 71, 76, 78, 83, 
+    80, 71, 76, 78, 83, 
+    80, 71, 76, 78, 83, 
+    80, 71, 76, 78, 
+    80, 78, 76, 71, 76, 78, 
+    80, 78, 76, 71, 76, 78, 
+    80, 78, 76, 71, 76, 78, 83, 
+    80, 71, 76, 78, 
+    80, 78, 76, 69, 76, 78, 
+    80, 78, 76, 69, 76, 78, 
+    80, 78, 76, 69, 73, 76, 78, 
 };
 uint_fast8_t test_pattern_HOTTOGO[SEQ_LEN] = { 
     35, 35, 46, 46, 47, 47, 46, 46,
