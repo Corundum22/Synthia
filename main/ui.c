@@ -11,10 +11,6 @@
 
 /*
 TODO:   add menu roller
-        fix
-        key press visualizer
-        add note playing in the top left..?
-        fix bar limits
 
 ASK:    what the seq's interface is gonna look like f
 */
@@ -24,6 +20,9 @@ const int SCREEN_HEIGHT = 480;
 lv_obj_t* curr_scr = NULL;
 lv_obj_t* scr0 = NULL;
 lv_obj_t* scr1 = NULL;
+
+//ROLLER
+uint_fast8_t menu_stable = 1;
 
 //MENU
 
@@ -76,31 +75,7 @@ uint_fast8_t squ_enable_old = -1;
 const int VIZ_PADDING = 2;
 const int BAR_HEIGHT = (VIZ_HEIGHT - NUM_BARS*9) / NUM_BARS;
 
-const int freq_bands[NUM_BARS + 1] = {
-    0, 20, 29, 40, 56, 80, 112, 159, 224, 317, 448,
-    632, 893, 1262, 1783, 2518, 3557, 5024, 7096,
-    10024, 65000
-};
-
-const uint_fast16_t freq_notes[] = { 8, 8, 9, 9, 10, 10, 11, 12, 12, 13, 
-    14, 15, 16, 17, 18, 19, 20, 21, 23, 24, 25, 27, 29, 30, 
-    32, 34, 36, 38, 41, 43, 46, 48, 51, 55, 58, 61, 65, 69, 
-    73, 77, 82, 87, 92, 97, 103, 110, 116, 123, 130, 138, 146, 
-    155, 164, 174, 184, 195, 207, 220, 233, 246, 261, 277, 293, 
-    311, 329, 349, 369, 391, 415, 440, 466, 493, 523, 554, 587, 
-    622, 659, 698, 739, 783, 830, 880, 932, 987, 1046, 1108, 
-    1174, 1244, 1318, 1396, 1479, 1567, 1661, 1760, 1864, 1975, 
-    2093, 2217, 2349, 2489, 2637, 2793, 2959, 3135, 3322, 3520, 
-    3729, 3951, 4186, 4434, 4698, 4978, 5274, 5587, 5919, 6271, 
-    6644, 7040, 7458, 7902, 8372, 8869, 9397, 9956, 10548, 11175, 
-    11839, 12543};
-
-lv_obj_t* viz_panel       = NULL;
-
-lv_obj_t* bars[NUM_BARS];
-uint16_t bar_vals[NUM_BARS];
-
-uint_fast8_t squ_test_pattern[] = {     
+uint_fast8_t squ_test_pattern[SEQ_LEN] = { 
     35, 35, 46, 46, 47, 47, 46, 46,
     35, 35, 46, 46, 47, 47, 46, 46,
     35, 35, 46, 46, 47, 47, 46, 46,
@@ -111,6 +86,157 @@ uint_fast8_t squ_test_pattern[] = {
     39, 39, 50, 50, 51, 51, 50, 50
 };
 
+const uint_fast16_t freq_notes[] = { 8, 8, 9, 9, 10, 10, 11, 12, 12, 13, 
+    14, 15, 16, 17, 18, 19, 20, 21, 23, 24, 25, 27, 29, 30, //24
+    32, 34, 36, 38, 41, 43, 46, 48, 51, 55, 58, 61, 65, 69, 
+    73, 77, 82, 87, 92, 97, 103, 110, 116, 123, 130, 138, 146, 
+    155, 164, 174, 184, 195, 207, 220, 233, 246, 261, 277, 293, 
+    311, 329, 349, 369, 391, 415, 440, 466, 493, 523, 554, 587, 
+    622, 659, 698, 739, 783, 830, 880, //96
+    932, 987, 1046, 1108, 
+    1174, 1244, 1318, 1396, 1479, 1567, 1661, 1760, 1864, 1975, 
+    2093, 2217, 2349, 2489, 2637, 2793, 2959, 3135, 3322, 3520, 
+    3729, 3951, 4186, 4434, 4698, 4978, 5274, 5587, 5919, 6271, 
+    6644, 7040, 7458, 7902, 8372, 8869, 9397, 9956, 10548, 11175, 
+    11839, 12543};
+
+const freq_mapping freq_map[128] = {
+    { 0, 0, 255, 0 },
+    { 0, 0, 255, 0 },
+    { 0, 0, 255, 0 },
+    { 0, 0, 255, 0 },
+    { 0, 0, 255, 0 },
+    { 0, 0, 255, 0 },
+    { 0, 0, 255, 0 },
+    { 0, 0, 255, 0 },
+    { 0, 0, 255, 0 },
+    { 0, 0, 255, 0 },
+    { 0, 0, 255, 0 },
+    { 0, 0, 255, 0 },
+    { 0, 0, 255, 0 },
+    { 0, 0, 255, 0 },
+    { 0, 0, 255, 0 },
+    { 0, 0, 255, 0 },
+    { 0, 0, 255, 0 },
+    { 0, 0, 255, 0 },
+    { 0, 0, 255, 0 },
+    { 0, 0, 255, 0 },
+    { 0, 0, 255, 0 },
+    { 0, 0, 255, 0 },
+    { 0, 0, 255, 0 },
+    { 0, 0, 255, 0 },
+    { 0, 1, 183, 72 },
+    { 0, 1, 100, 155 },
+    { 0, 1, 13, 242 },
+    { 1, 2, 187, 68 },
+    { 1, 2, 102, 153 },
+    { 1, 2, 13, 242 },
+    { 2, 3, 192, 63 },
+    { 2, 3, 114, 141 },
+    { 2, 3, 31, 224 },
+    { 3, 4, 204, 51 },
+    { 3, 4, 121, 134 },
+    { 3, 4, 33, 222 },
+    { 4, 5, 204, 51 },
+    { 4, 5, 122, 133 },
+    { 4, 5, 34, 221 },
+    { 5, 6, 208, 47 },
+    { 5, 6, 130, 125 },
+    { 5, 6, 46, 209 },
+    { 6, 7, 218, 37 },
+    { 6, 7, 136, 119 },
+    { 6, 7, 48, 207 },
+    { 7, 8, 219, 36 },
+    { 7, 8, 140, 115 },
+    { 7, 8, 55, 200 },
+    { 8, 9, 227, 28 },
+    { 8, 9, 147, 108 },
+    { 8, 9, 63, 192 },
+    { 9, 10, 234, 21 },
+    { 9, 10, 155, 100 },
+    { 9, 10, 72, 183 },
+    { 10, 11, 241, 14 },
+    { 10, 11, 161, 94 },
+    { 10, 11, 76, 179 },
+    { 11, 12, 243, 12 },
+    { 11, 12, 164, 91 },
+    { 11, 12, 80, 175 },
+    { 12, 13, 247, 8 },
+    { 12, 13, 170, 85 },
+    { 12, 13, 87, 168 },
+    { 13, 14, 255, 0 },
+    { 13, 14, 176, 79 },
+    { 13, 14, 93, 162 },
+    { 13, 14, 5, 250 },
+    { 14, 15, 181, 74 },
+    { 14, 15, 99, 156 },
+    { 14, 15, 11, 244 },
+    { 15, 16, 187, 68 },
+    { 15, 16, 105, 150 },
+    { 15, 16, 18, 237 },
+    { 16, 17, 192, 63 },
+    { 16, 17, 110, 145 },
+    { 16, 17, 22, 233 },
+    { 17, 18, 197, 58 },
+    { 17, 18, 116, 139 },
+    { 17, 18, 30, 225 },
+    { 18, 19, 203, 52 },
+    { 18, 19, 122, 133 },
+    { 18, 19, 35, 220 },
+    { 19, 19, 255, 0 },
+    { 19, 19, 255, 0 },
+    { 19, 19, 255, 0 },
+    { 19, 19, 255, 0 },
+    { 19, 19, 255, 0 },
+    { 19, 19, 255, 0 },
+    { 19, 19, 255, 0 },
+    { 19, 19, 255, 0 },
+    { 19, 19, 255, 0 },
+    { 19, 19, 255, 0 },
+    { 19, 19, 255, 0 },
+    { 19, 19, 255, 0 },
+    { 19, 19, 255, 0 },
+    { 19, 19, 255, 0 },
+    { 19, 19, 255, 0 },
+    { 19, 19, 255, 0 },
+    { 19, 19, 255, 0 },
+    { 19, 19, 255, 0 },
+    { 19, 19, 255, 0 },
+    { 19, 19, 255, 0 },
+    { 19, 19, 255, 0 },
+    { 19, 19, 255, 0 },
+    { 19, 19, 255, 0 },
+    { 19, 19, 255, 0 },
+    { 19, 19, 255, 0 },
+    { 19, 19, 255, 0 },
+    { 19, 19, 255, 0 },
+    { 19, 19, 255, 0 },
+    { 19, 19, 255, 0 },
+    { 19, 19, 255, 0 },
+    { 19, 19, 255, 0 },
+    { 19, 19, 255, 0 },
+    { 19, 19, 255, 0 },
+    { 19, 19, 255, 0 },
+    { 19, 19, 255, 0 },
+    { 19, 19, 255, 0 },
+    { 19, 19, 255, 0 },
+    { 19, 19, 255, 0 },
+    { 19, 19, 255, 0 },
+    { 19, 19, 255, 0 },
+    { 19, 19, 255, 0 },
+    { 19, 19, 255, 0 },
+    { 19, 19, 255, 0 },
+    { 19, 19, 255, 0 },
+    { 19, 19, 255, 0 },
+    { 19, 19, 255, 0 }
+};
+
+lv_obj_t* viz_panel       = NULL;
+
+lv_obj_t* bars[NUM_BARS];
+uint16_t bar_vals[NUM_BARS];
+
+uint32_t mask = 0;
 
 void update_ui_cb(lv_timer_t* timer) {
     
@@ -127,7 +253,13 @@ void update_ui_cb(lv_timer_t* timer) {
             lv_bar_set_value(menu_bar[2], sustain_gui, LV_ANIM_OFF);
             lv_bar_set_value(menu_bar[3], release_gui, LV_ANIM_OFF);
 
-            update_visualizer();
+            update_visualizer_vals();
+
+            for(int i = 0; i < NUM_BARS; i++){
+                lv_bar_set_value(bars[i], bar_vals[i], LV_ANIM_OFF);
+            }
+            
+
             update_top_left();
             break;
 
@@ -143,7 +275,12 @@ void update_ui_cb(lv_timer_t* timer) {
             lv_bar_set_value(menu_bar[2], 3, LV_ANIM_OFF);
             lv_bar_set_value(menu_bar[3], 4, LV_ANIM_OFF);
                     
-            update_visualizer();
+            update_visualizer_vals();       
+
+            for(int i = 0; i < NUM_BARS; i++){
+                lv_bar_set_value(bars[i], bar_vals[i], LV_ANIM_OFF);
+            }
+            
             update_top_left();
             break;
 
@@ -327,24 +464,27 @@ void update_top_left(){
     lv_label_set_text_fmt(button_text, "%s", midi_note_name);
 }
 
-void update_visualizer(){
-    for(int i = 0; i < NUM_BARS; i++){
-        lv_bar_set_value(bars[i], 0, LV_ANIM_OFF);
-    }
+void update_visualizer_vals(){
+
+    mask = 0;
 
     for(int i = 0; i < NUM_VOICES + SEQ_VOICES; i++){
         if(note_properties_gui[i].is_sounding){
-            uint16_t freq = freq_notes[note_properties_gui[i].note_num];
-            uint_fast8_t band = get_band(note_properties_gui[i].note_num);
-            if(band > 0){
-                lv_bar_set_value(bars[band], note_properties_gui[i].multiplier, LV_ANIM_OFF);
-            }
+
+            uint_fast8_t band1 = freq_map[note_properties_gui[i].note_num].bar1;
+            mask = mask | (1 << band1);
+            bar_vals[band1] += freq_map[note_properties_gui[i].note_num].weight1 * note_properties_gui[i].multiplier;
+
+            uint_fast8_t band2 = freq_map[note_properties_gui[i].note_num].bar2;
+            mask = mask | (1 << band2);
+            bar_vals[band2] += freq_map[note_properties_gui[i].note_num].weight2 * note_properties_gui[i].multiplier;
         }
     }
-}
-
-uint_fast8_t get_band(uint_fast8_t num){
-    return NUM_BARS - 1 - num %12;
+    for(int i = 0; i < NUM_BARS; i++){
+        if(!(mask >> i & (uint32_t)0x0001)){ 
+            bar_vals[i] = 0;
+        }
+    }
 }
 
 void create_visualizer(){
@@ -354,14 +494,13 @@ void create_visualizer(){
     lv_obj_set_pos(viz_panel, 0, BUTTON_HEIGHT);
 
     generic_obj_format(viz_panel, lv_color_black());
-    //lv_obj_set_style_pad_all(viz_panel, PADDING_WIDTH-3, LV_PART_MAIN | LV_STATE_DEFAULT);
     flex_column(viz_panel);
 
     for(int i = 0; i < NUM_BARS; i++){
         bars[i] = lv_bar_create(viz_panel);
         lv_obj_set_size(bars[i], LEFT_PANEL_WIDTH - BORDER_WIDTH*2 - VIZ_PADDING*2, BAR_HEIGHT);
         lv_obj_set_pos(bars[i], 0, VIZ_HEIGHT + BAR_HEIGHT*i);
-        lv_bar_set_range(bars[i], 0, 255);
+        lv_bar_set_range(bars[i], 0, 65535);
     }
 }
 
@@ -381,9 +520,7 @@ void generic_obj_format(lv_obj_t* o, lv_color_t c){
 void bar_style(lv_obj_t* bar, lv_style_t* bg, lv_style_t* ind){
 
     lv_color_t inner_color = lv_color_hex(0x822E28);
-    lv_color_t outer_color = lv_color_hex(0xCC483F); //BGR
-    
-    //lv_obj_set_style_bg_color(bar, lv_palette_main(LV_PALETTE_BLUE), LV_PART_MAIN);
+    lv_color_t outer_color = lv_color_hex(0xCC483F); //BGR // todo
     
     //border
     lv_style_init(bg);
@@ -391,7 +528,6 @@ void bar_style(lv_obj_t* bar, lv_style_t* bg, lv_style_t* ind){
     lv_style_set_border_width(bg, 4);
     lv_style_set_pad_all(bg, 7); // BW+3
     lv_style_set_radius(bg, 18);
-    //lv_style_set_anim_duration(&style_bg, 1000);
 
     //inside
     lv_style_init(ind);

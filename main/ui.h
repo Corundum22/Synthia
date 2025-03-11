@@ -1,6 +1,13 @@
 #ifndef UI_H_
 #define UI_H_
 
+typedef struct {
+    uint_fast8_t bar1;
+    uint_fast8_t bar2;
+    uint_fast16_t weight1;
+    uint_fast16_t weight2;
+} freq_mapping;
+
 void create_ui();
 void create_menu();
 void create_squ();
@@ -13,7 +20,7 @@ void flex_column(lv_obj_t* o);
 void bar_style(lv_obj_t* bar, lv_style_t* bg, lv_style_t* ind);
 
 void update_midi_note_name(uint_fast8_t num);
-void update_visualizer();
+void update_visualizer_vals();
 void update_top_left();
 uint_fast8_t get_band(uint_fast8_t num);
 
