@@ -3,23 +3,23 @@ from fractions import Fraction
 
 MAX_LINE_LEN = 60
 NUM_VALUES = 256
-STARTING_LINE = "int_fast16_t sin_array[] = { "
+STARTING_LINE = "uint32_t num_denom[] = { "
 LEFT_SPACES = 4
 
 
-def func_to_apply(x):
-    return int((2**16 / 2) * (sin(2 * pi * x / NUM_VALUES)))
 #def func_to_apply(x):
-#    if (x < 128):
-#        current_freq = 440 * 2**((x - 69) / 12)
-#        target_val = 40000000 / (2**8 * current_freq)
-#        frac_res = Fraction(*target_val.as_integer_ratio()).limit_denominator(100);
-#        return frac_res.numerator #this will be applied as a numerator to the current time
-#    else:
-#        current_freq = 440 * 2**((x - 69 - 128) / 12)
-#        target_val = 40000000 / (2**8 * current_freq)
-#        frac_res = Fraction(*target_val.as_integer_ratio()).limit_denominator(100);
-#        return frac_res.denominator #this will be applied as a denominator to the current time
+#    return int((2**16 / 2) * (1 + sin(2 * pi * x / NUM_VALUES)))
+def func_to_apply(x):
+    if (x < 128):
+        current_freq = 440 * 2**((x - 69) / 12)
+        target_val = 44100 / (2**8 * current_freq)
+        frac_res = Fraction(*target_val.as_integer_ratio()).limit_denominator(100);
+        return frac_res.numerator #this will be applied as a numerator to the current time
+    else:
+        current_freq = 440 * 2**((x - 69 - 128) / 12)
+        target_val = 44100 / (2**8 * current_freq)
+        frac_res = Fraction(*target_val.as_integer_ratio()).limit_denominator(100);
+        return frac_res.denominator #this will be applied as a denominator to the current time
 
 
 
