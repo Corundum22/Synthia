@@ -75,7 +75,7 @@ static inline uint16_t audio_sample_get(uint32_t time) {
     #endif
 
     // TODO: uncomment to prevent clipping with multiple voices active
-    //data /= (NUM_VOICES + SEQ_VOICES);
+    data /= (NUM_VOICES + SEQ_VOICES);
     
     //uint16_t unsigned_data = ((uint16_t) data) + 0b0111111111111111;
 

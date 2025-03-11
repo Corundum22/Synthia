@@ -7,7 +7,7 @@
 #include "global_header.h"
 #include "sequencer.h"
 
-#define NUM_VOICES                    8
+#define NUM_VOICES                    3
 #define ENVELOPE_TRIGGER_PERIOD_US    10000
 
 #define MAX_ENVELOPE_VAL    0xFF
