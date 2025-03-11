@@ -5,7 +5,9 @@
 #include "esp_timer.h"
 #include "basic_io.h"
 #include "data_y_splitter.h"
+#include "freertos/idf_additions.h"
 #include "global_header.h"
+#include "portmacro.h"
 #include "sequencer.h"
 
 
@@ -151,7 +153,18 @@ void envelope_timer_callback() {
                     note_properties[i].is_sounding = false;
                     break;
             }
-            note_properties_slow[i] = note_properties[i];
+            //if (pdTRUE == xSemaphoreTake(guiSemaphore, portMAX_DELAY)) {
+                note_properties_slow[i] = note_properties[i];
+    /*for (int i = 0; i < NUM_VOICES + SEQ_VOICES; i++) {
+        note_properties_gui[i].is_sounding = note_properties[i].is_sounding;
+        note_properties_gui[i].is_pressed = note_properties[i].is_pressed;
+        note_properties_gui[i].note_num = note_properties[i].note_num;
+        note_properties_gui[i].envelope_state = note_properties[i].envelope_state;
+        note_properties_gui[i].multiplier = note_properties[i].multiplier;
+    }*/
+                xSemaphoreGive(ySplitterSemaphore);
+                //xSemaphoreGive(guiSemaphore);
+            //}
         }
     }
 }

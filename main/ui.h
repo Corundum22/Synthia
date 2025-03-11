@@ -15,8 +15,7 @@ void bar_style(lv_obj_t* bar, lv_style_t* bg, lv_style_t* ind);
 void update_midi_note_name(uint_fast8_t num);
 void update_visualizer();
 void update_top_left();
-uint16_t get_freq(uint_fast8_t note_num);
-uint_fast8_t get_band(uint16_t freq);
+uint_fast8_t get_band(uint_fast8_t num);
 
 void update_ui_cb(lv_timer_t *timer);
 

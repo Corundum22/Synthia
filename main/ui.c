@@ -11,14 +11,12 @@
 
 /*
 TODO:   add menu roller
-        add key press visualizer
+        fix
+        key press visualizer
         add note playing in the top left..?
         fix bar limits
 
-ASK:    what are the limits for the bars (ADSR/Sin/Squ/etc) j
-        how high can note_data's multiplier get j
-        what the seq's interface is gonna look like f
-        what top left will do j
+ASK:    what the seq's interface is gonna look like f
 */
 
 const int SCREEN_WIDTH = 320;
@@ -79,10 +77,23 @@ const int VIZ_PADDING = 2;
 const int BAR_HEIGHT = (VIZ_HEIGHT - NUM_BARS*9) / NUM_BARS;
 
 const int freq_bands[NUM_BARS + 1] = {
-    20, 29, 40, 56, 80, 112, 159, 224, 317, 448,
+    0, 20, 29, 40, 56, 80, 112, 159, 224, 317, 448,
     632, 893, 1262, 1783, 2518, 3557, 5024, 7096,
-    10024, 14159, 20000
+    10024, 65000
 };
+
+const uint_fast16_t freq_notes[] = { 8, 8, 9, 9, 10, 10, 11, 12, 12, 13, 
+    14, 15, 16, 17, 18, 19, 20, 21, 23, 24, 25, 27, 29, 30, 
+    32, 34, 36, 38, 41, 43, 46, 48, 51, 55, 58, 61, 65, 69, 
+    73, 77, 82, 87, 92, 97, 103, 110, 116, 123, 130, 138, 146, 
+    155, 164, 174, 184, 195, 207, 220, 233, 246, 261, 277, 293, 
+    311, 329, 349, 369, 391, 415, 440, 466, 493, 523, 554, 587, 
+    622, 659, 698, 739, 783, 830, 880, 932, 987, 1046, 1108, 
+    1174, 1244, 1318, 1396, 1479, 1567, 1661, 1760, 1864, 1975, 
+    2093, 2217, 2349, 2489, 2637, 2793, 2959, 3135, 3322, 3520, 
+    3729, 3951, 4186, 4434, 4698, 4978, 5274, 5587, 5919, 6271, 
+    6644, 7040, 7458, 7902, 8372, 8869, 9397, 9956, 10548, 11175, 
+    11839, 12543};
 
 lv_obj_t* viz_panel       = NULL;
 
@@ -233,6 +244,7 @@ void create_menu() {
         // TODO: adjust limits
         lv_obj_set_size(menu_bar[i], MENU_BAR_WIDTH, MENU_BAR_HEIGHT);
         lv_bar_set_value(menu_bar[i], 0, LV_ANIM_OFF);
+        lv_bar_set_range(menu_bar[i], 0, 255);
 
         bar_style(menu_bar[i], &bar_bg_style, &bar_ind_style);
     }
@@ -316,35 +328,24 @@ void update_top_left(){
 }
 
 void update_visualizer(){
-
-
     for(int i = 0; i < NUM_BARS; i++){
         lv_bar_set_value(bars[i], 0, LV_ANIM_OFF);
     }
 
     for(int i = 0; i < NUM_VOICES + SEQ_VOICES; i++){
         if(note_properties_gui[i].is_sounding){
-            uint16_t freq = get_freq(note_properties_gui[i].note_num);
+            uint16_t freq = freq_notes[note_properties_gui[i].note_num];
             uint_fast8_t band = get_band(freq);
             if(band > 0){
-                lv_bar_set_value(bars[band], 100, LV_ANIM_OFF);
+                lv_bar_set_value(bars[band], note_properties_gui[i].multiplier, LV_ANIM_OFF);
             }
         }
     }
 }
 
-uint_fast8_t get_band(uint16_t freq){
-    for(uint_fast8_t i = 0; i < NUM_BARS; i++){
-        if(freq >= freq_bands[i] && freq < freq_bands[i+1]){
-            return i; // todo: lookup table
-        }
-    }
-    return -1;
+uint_fast8_t get_band(uint_fast8_t num){
+    return NUM_BARS - 1 - num %12;
 }
-
-uint16_t get_freq(uint_fast8_t note_num){
-    return 440 * (pow(2, note_num-69) / 12); // todo: lookup table
-};
 
 void create_visualizer(){
 
@@ -360,15 +361,8 @@ void create_visualizer(){
         bars[i] = lv_bar_create(viz_panel);
         lv_obj_set_size(bars[i], LEFT_PANEL_WIDTH - BORDER_WIDTH*2 - VIZ_PADDING*2, BAR_HEIGHT);
         lv_obj_set_pos(bars[i], 0, VIZ_HEIGHT + BAR_HEIGHT*i);
+        lv_bar_set_range(bars[i], 0, 255);
     }
-
-    //low_pass_text = lv_label_create(viz_panel);
-    //lv_obj_set_style_text_color(low_pass_text, lv_color_white(), LV_PART_MAIN);
-    //lv_obj_set_style_text_align(low_pass_text, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN | LV_STATE_DEFAULT);
-
-    //low_pass_bar = lv_bar_create(viz_panel);
-    //lv_obj_set_size(low_pass_bar, LOW_PASS_BAR_WIDTH, LOW_PASS_BAR_HEIGHT);
-    //lv_bar_set_value(low_pass_bar, 0, LV_ANIM_OFF);
 }
 
 void generic_obj_format(lv_obj_t* o, lv_color_t c){

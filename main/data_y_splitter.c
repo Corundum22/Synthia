@@ -126,6 +126,10 @@ static void copy_syn() {
 
 static inline void note_data_deep_copy() {
     for (int i = 0; i < NUM_VOICES + SEQ_VOICES; i++) {
-        note_properties_gui[i] = note_properties_slow[i];
+        note_properties_gui[i].is_sounding = note_properties_slow[i].is_sounding;
+        note_properties_gui[i].is_pressed = note_properties_slow[i].is_pressed;
+        note_properties_gui[i].note_num = note_properties_slow[i].note_num;
+        note_properties_gui[i].envelope_state = note_properties_slow[i].envelope_state;
+        note_properties_gui[i].multiplier = note_properties_slow[i].multiplier;
     }
 }
