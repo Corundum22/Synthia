@@ -33,13 +33,9 @@ static inline uint16_t wave(uint_fast8_t midi_note_number, uint_fast16_t multipl
     uint_fast32_t ratio_denominator = ratio_denom[midi_note_number];
 
     uint_fast32_t point_in_cycle = ((time * ratio_numerator) / ratio_denominator) & 0b11111111;
-    //uint_fast32_t point_in_cycle = ((time / 21) & 0xff);
 
-    //int_fast32_t result = (int_fast32_t) sin_array[point_in_cycle];
-    //result = (result * multiply_val) >> MULTIPLIER_WIDTH;
-    //uint16_t result = sin_array[(time) & 0b11111111];
-    uint16_t result = (point_in_cycle < 128) ? 0xffff : 0;
-
+    uint16_t result = current_wave[point_in_cycle];
+    result = (result * multiply_val) >> MULTIPLIER_WIDTH;
     return result;
 }
 
