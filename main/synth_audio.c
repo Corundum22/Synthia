@@ -10,6 +10,7 @@
 #include "note_handler.h"
 #include "global_header.h"
 #include "sequencer.h"
+#include "data_y_splitter.h"
 #include <string.h>
 
 
@@ -23,6 +24,8 @@ if (note_properties[i].is_sounding == true) {\
 
 
 dac_continuous_handle_t dac_handle;
+
+uint_fast16_t *current_wave = sin_array;
 
 
 static inline uint16_t wave(uint_fast8_t midi_note_number, uint_fast16_t multiply_val, uint_fast32_t time) {
@@ -74,17 +77,29 @@ static inline uint16_t audio_sample_get(uint32_t time) {
         GET_NOTE(9)
     #endif
 
-    // TODO: uncomment to prevent clipping with multiple voices active
     data /= (NUM_VOICES + SEQ_VOICES);
     
-    //uint16_t unsigned_data = ((uint16_t) data) + 0b0111111111111111;
-
     return data;
-    //return unsigned_data;
-    //ESP_ERROR_CHECK(dac_oneshot_output_voltage(lower_dac_handle, (uint8_t) unsigned_data));
-    //ESP_ERROR_CHECK(dac_oneshot_output_voltage(upper_dac_handle, (uint8_t) (unsigned_data >> 8)));
 }
 
+static inline void set_current_wave() {
+    switch (wave_select_syn) {
+        case ssin:
+            current_wave = sin_array;
+            return;
+        case striangle:
+            current_wave = triangle_array;
+            return;
+        case ssawtooth:
+            current_wave = sawtooth_array;
+            return;
+        case ssquare:
+            current_wave = square_array;
+            return;
+        default:
+            return;
+    }
+}
 
 static uint8_t data_array[AUDIO_BUF_SIZE * NUM_DAC_CHANNELS];
 void task_audio_generate() {
@@ -93,7 +108,7 @@ void task_audio_generate() {
 
     while (1) {
 
-        dac_event_data_t event_data;
+        set_current_wave();
  
         for (uint_fast16_t i = 0; i < AUDIO_BUF_SIZE * NUM_DAC_CHANNELS; i += 2) {
             uint16_t data = audio_sample_get(time);
@@ -118,7 +133,7 @@ void dac_init() {
         .desc_num = 4, // TODO: select a proper value for this
         .buf_size = AUDIO_BUF_SIZE * NUM_DAC_CHANNELS,
         .freq_hz = OUTPUT_SAMPLE_RATE,
-        .offset = 0, // TODO: use this instead of hardcoding an offset
+        .offset = 0,
         .clk_src = DAC_DIGI_CLK_SRC_APLL,
         .chan_mode = DAC_CHANNEL_MODE_ALTER,
     };

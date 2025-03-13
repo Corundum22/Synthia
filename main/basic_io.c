@@ -35,7 +35,7 @@ int_fast16_t sustain_val = DEFAULT_ENVELOPE_VALS;
 int_fast16_t release_val = DEFAULT_ENVELOPE_VALS;
 
 // Wave menu values
-int_fast16_t wave_select_val = 1;
+wave_type wave_select_val = ssin;
 int_fast16_t high_pass_val = DEFAULT_HIGH_PASS_VAL;
 
 // Sequencer setup values
@@ -123,7 +123,7 @@ static void apply_deltas(int* pot_1_delta, int* pot_2_delta, int* pot_3_delta, i
 
             break;
         case mwave:
-            wave_select_val = saturation_add(wave_select_val, *pot_1_delta, 0, 3);
+            wave_select_val = saturation_add((int) wave_select_val, *pot_1_delta, 0, MAX_WAVE_NUMBER);
             if (*pot_2_delta) {
                 high_pass_val = saturation_add(high_pass_val, *pot_2_delta, 0, LEDC_DUTY_MAX_VAL);
                 apply_high_pass((uint8_t) high_pass_val);

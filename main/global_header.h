@@ -5,6 +5,14 @@
 #include <stdbool.h>
 
 
+#define MAX_WAVE_NUMBER    3
+enum wave_type_t {
+    ssin = 0,
+    striangle = 1,
+    ssawtooth = 2,
+    ssquare = 3,
+} typedef wave_type;
+
 enum menu_state_t {
     madsr = 0,
     mwave = 1,

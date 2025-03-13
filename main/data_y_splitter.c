@@ -21,7 +21,7 @@ int_fast16_t sustain_nh = DEFAULT_ENVELOPE_VALS;
 int_fast16_t release_nh = DEFAULT_ENVELOPE_VALS;
 
 // Synth audio wave menu values
-int_fast16_t wave_select_syn = 1;
+wave_type wave_select_syn = 1;
 
 // Note handler sequencer setup values
 int_fast16_t squ_enable_squ = 0;

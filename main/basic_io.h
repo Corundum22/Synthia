@@ -68,7 +68,7 @@ extern int_fast16_t sustain_val;
 extern int_fast16_t release_val;
 
 // Wave menu values
-extern int_fast16_t wave_select_val;
+extern wave_type wave_select_val;
 extern int_fast16_t high_pass_val;
 
 // Sequencer setup values

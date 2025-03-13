@@ -19,7 +19,7 @@ extern int_fast16_t sustain_nh;
 extern int_fast16_t release_nh;
 
 // Synth audio wave menu values
-extern int_fast16_t wave_select_syn;
+extern wave_type wave_select_syn;
 
 // Sequencer sequencer setup values
 extern int_fast16_t squ_enable_squ;
