@@ -115,7 +115,7 @@ void set_squ_keyrelease(uint_fast8_t key_num) {
 }
 
 
-void envelope_timer_callback() {
+void envelope_advance() {
     for (int i = 0; i < NUM_VOICES + SEQ_VOICES; i++) {
         if (note_properties[i].is_sounding) {
             switch (note_properties[i].envelope_state) {
@@ -153,28 +153,9 @@ void envelope_timer_callback() {
                     note_properties[i].is_sounding = false;
                     break;
             }
-            //if (pdTRUE == xSemaphoreTake(guiSemaphore, portMAX_DELAY)) {
-                note_properties_slow[i] = note_properties[i];
-    /*for (int i = 0; i < NUM_VOICES + SEQ_VOICES; i++) {
-        note_properties_gui[i].is_sounding = note_properties[i].is_sounding;
-        note_properties_gui[i].is_pressed = note_properties[i].is_pressed;
-        note_properties_gui[i].note_num = note_properties[i].note_num;
-        note_properties_gui[i].envelope_state = note_properties[i].envelope_state;
-        note_properties_gui[i].multiplier = note_properties[i].multiplier;
-    }*/
-                xSemaphoreGive(ySplitterSemaphore);
-                //xSemaphoreGive(guiSemaphore);
-            //}
+
+            note_properties_slow[i] = note_properties[i];
+            xSemaphoreGive(ySplitterSemaphore);
         }
     }
-}
-
-void envelope_timer_init() {
-    const esp_timer_create_args_t envelope_timer_args = {
-        .callback = &envelope_timer_callback,
-        .name = "Envelope timer",
-    };
-
-    ESP_ERROR_CHECK(esp_timer_create(&envelope_timer_args, &envelope_timer_handle));
-    ESP_ERROR_CHECK(esp_timer_start_periodic(envelope_timer_handle, ENVELOPE_TRIGGER_PERIOD_US));
 }

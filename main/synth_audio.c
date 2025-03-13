@@ -104,6 +104,7 @@ void task_audio_generate() {
 
     while (1) {
 
+        // Set the current wavetable
         set_current_wave();
  
         for (uint_fast16_t i = 0; i < AUDIO_BUF_SIZE * NUM_DAC_CHANNELS; i += 2) {
@@ -115,6 +116,8 @@ void task_audio_generate() {
             time++;
         }
 
+        // Advance each note's envelope
+        envelope_advance();
 
         ESP_ERROR_CHECK(dac_continuous_write(dac_handle, data_array, AUDIO_BUF_SIZE * NUM_DAC_CHANNELS, NULL, -1));
    

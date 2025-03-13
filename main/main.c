@@ -34,9 +34,6 @@ static void task_create() {
 }
 
 static void exec_init() {
-    envelope_timer_init();
-    printf("Envelope timer init finished\n");
-
     sequencer_timer_init();
     printf("Sequencer timer init finished\n");
 
