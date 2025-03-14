@@ -23,6 +23,9 @@ extern wave_type wave_select1_syn;
 extern int_fast16_t wave_blend_syn;
 extern wave_type wave_select2_syn;
 
+// Not part of a menu
+extern int_fast16_t wave_blend_pair_syn;
+
 // Sequencer sequencer setup values
 extern int_fast16_t squ_enable_squ;
 extern int_fast16_t squ_length_squ;

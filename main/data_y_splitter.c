@@ -25,6 +25,9 @@ wave_type wave_select1_syn = ssin;
 int_fast16_t wave_blend_syn = DEFAULT_BLEND_VAL;
 wave_type wave_select2_syn = ssin;
 
+// Not part of a menu
+int_fast16_t wave_blend_pair_syn = BLEND_VAL_MAX - DEFAULT_BLEND_VAL;
+
 // Note handler sequencer setup values
 int_fast16_t squ_enable_squ = 0;
 int_fast16_t squ_length_squ = 0;
@@ -45,7 +48,7 @@ int_fast16_t release_gui = DEFAULT_ENVELOPE_VALS;
 // GUI wave menu values
 wave_type wave_select1_gui = ssin;
 int_fast16_t wave_blend_gui = DEFAULT_BLEND_VAL;
-wave_type wave_select1_gui = ssin;
+wave_type wave_select2_gui = ssin;
 int_fast16_t high_pass_gui = DEFAULT_HIGH_PASS_VAL;
 
 // GUI sequencer setup values
@@ -127,7 +130,10 @@ static void copy_nh() {
 }
 
 static void copy_syn() {
-    wave_select_syn = wave_select_val;
+    wave_select1_syn = wave_select2_val;
+    wave_blend_syn = wave_blend_val;
+    wave_select2_syn = wave_select2_val;
+    wave_blend_pair_syn = BLEND_VAL_MAX - wave_blend_val;
 }
 
 static inline void note_data_deep_copy() {

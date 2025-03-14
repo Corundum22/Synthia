@@ -36,7 +36,7 @@ static inline uint16_t wave(uint_fast8_t midi_note_number, uint_fast16_t multipl
 
     uint_fast32_t point_in_cycle = ((time * ratio_numerator) / ratio_denominator) & 0b11111111;
 
-    uint32_t result = current_wave1[point_in_cycle] *;
+    uint32_t result = (current_wave1[point_in_cycle] * wave_blend_syn) + (current_wave2[point_in_cycle] * wave_blend_pair_syn);
     result = (result * multiply_val) >> (MULTIPLIER_WIDTH + BLEND_VAL_MAX_BITS);
     return result;
 }
@@ -81,21 +81,38 @@ static inline uint16_t audio_sample_get(uint32_t time) {
 }
 
 static inline void set_current_wave() {
-    switch (wave_select_syn) {
+    switch (wave_select1_syn) {
         case ssin:
-            current_wave = sin_array;
-            return;
+            current_wave1 = sin_array;
+            break;
         case striangle:
-            current_wave = triangle_array;
-            return;
+            current_wave1 = triangle_array;
+            break;
         case ssawtooth:
-            current_wave = sawtooth_array;
-            return;
+            current_wave1 = sawtooth_array;
+            break;
         case ssquare:
-            current_wave = square_array;
-            return;
+            current_wave1 = square_array;
+            break;
         default:
-            return;
+            break;
+    }
+
+    switch (wave_select2_syn) {
+        case ssin:
+            current_wave2 = sin_array;
+            break;
+        case striangle:
+            current_wave2 = triangle_array;
+            break;
+        case ssawtooth:
+            current_wave2 = sawtooth_array;
+            break;
+        case ssquare:
+            current_wave2 = square_array;
+            break;
+        default:
+            break;
     }
 }
 
