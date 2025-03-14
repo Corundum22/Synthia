@@ -45,6 +45,11 @@
 #define DEFAULT_ENVELOPE_VALS    100
 #define DEFAULT_LOW_PASS_VAL     20
 #define DEFAULT_HIGH_PASS_VAL    20
+#define DEFAULT_BLEND_VAL        1
+
+#define BLEND_VAL_MIN            0
+#define BLEND_VAL_MAX            256
+#define BLEND_VAL_MAX_BITS       8
 
 #define ANALOG_READ_LOOP_MS      4
 
@@ -68,7 +73,9 @@ extern int_fast16_t sustain_val;
 extern int_fast16_t release_val;
 
 // Wave menu values
-extern wave_type wave_select_val;
+extern wave_type wave_select1_val;
+extern int_fast16_t wave_blend_val;
+extern wave_type wave_select2_val;
 extern int_fast16_t high_pass_val;
 
 // Sequencer setup values

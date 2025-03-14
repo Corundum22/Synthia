@@ -21,7 +21,9 @@ int_fast16_t sustain_nh = DEFAULT_ENVELOPE_VALS;
 int_fast16_t release_nh = DEFAULT_ENVELOPE_VALS;
 
 // Synth audio wave menu values
-wave_type wave_select_syn = 1;
+wave_type wave_select1_syn = ssin;
+int_fast16_t wave_blend_syn = DEFAULT_BLEND_VAL;
+wave_type wave_select2_syn = ssin;
 
 // Note handler sequencer setup values
 int_fast16_t squ_enable_squ = 0;
@@ -41,7 +43,9 @@ int_fast16_t sustain_gui = DEFAULT_ENVELOPE_VALS;
 int_fast16_t release_gui = DEFAULT_ENVELOPE_VALS;
 
 // GUI wave menu values
-int_fast16_t wave_select_gui = 1;
+wave_type wave_select1_gui = ssin;
+int_fast16_t wave_blend_gui = DEFAULT_BLEND_VAL;
+wave_type wave_select1_gui = ssin;
 int_fast16_t high_pass_gui = DEFAULT_HIGH_PASS_VAL;
 
 // GUI sequencer setup values
@@ -94,7 +98,9 @@ static void copy_gui() {
     decay_gui = decay_val;
     sustain_gui = sustain_val;
     release_gui = release_val;
-    wave_select_gui = wave_select_val;
+    wave_select1_gui = wave_select1_val;
+    wave_blend_gui = wave_blend_val;
+    wave_select2_gui = wave_select2_val;
     squ_enable_gui = squ_enable_val;
     squ_length_gui = squ_length_val;
     squ_tempo_gui = squ_tempo_val;

@@ -11,6 +11,7 @@
 #include "global_header.h"
 #include "sequencer.h"
 #include "data_y_splitter.h"
+#include "basic_io.h"
 #include <string.h>
 
 
@@ -25,7 +26,8 @@ if (note_properties[i].is_sounding == true) {\
 
 dac_continuous_handle_t dac_handle;
 
-uint_fast16_t *current_wave = sin_array;
+uint_fast16_t *current_wave1 = sin_array;
+uint_fast16_t *current_wave2 = sin_array;
 
 
 static inline uint16_t wave(uint_fast8_t midi_note_number, uint_fast16_t multiply_val, uint_fast32_t time) {
@@ -34,8 +36,8 @@ static inline uint16_t wave(uint_fast8_t midi_note_number, uint_fast16_t multipl
 
     uint_fast32_t point_in_cycle = ((time * ratio_numerator) / ratio_denominator) & 0b11111111;
 
-    uint16_t result = current_wave[point_in_cycle];
-    result = (result * multiply_val) >> MULTIPLIER_WIDTH;
+    uint32_t result = current_wave1[point_in_cycle] *;
+    result = (result * multiply_val) >> (MULTIPLIER_WIDTH + BLEND_VAL_MAX_BITS);
     return result;
 }
 

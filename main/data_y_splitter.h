@@ -19,7 +19,9 @@ extern int_fast16_t sustain_nh;
 extern int_fast16_t release_nh;
 
 // Synth audio wave menu values
-extern wave_type wave_select_syn;
+extern wave_type wave_select1_syn;
+extern int_fast16_t wave_blend_syn;
+extern wave_type wave_select2_syn;
 
 // Sequencer sequencer setup values
 extern int_fast16_t squ_enable_squ;
@@ -38,7 +40,9 @@ extern int_fast16_t sustain_gui;
 extern int_fast16_t release_gui;
 
 // GUI wave menu values
-extern int_fast16_t wave_select_gui;
+extern wave_type wave_select1_gui;
+extern int_fast16_t wave_blend_gui;
+extern wave_type wave_select2_gui;
 extern int_fast16_t high_pass_gui;
 
 // GUI sequencer setup values
