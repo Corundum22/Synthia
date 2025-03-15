@@ -266,7 +266,7 @@ void update_ui_cb(lv_timer_t* timer) {
         case mwave:
             if(curr_scr != scr0){lv_scr_load(scr0); curr_scr = scr0;}
 
-            lv_label_set_text_fmt(menu_text[0], "Sine: %d", wave_select_gui);
+            lv_label_set_text_fmt(menu_text[0], "Sine: %d", 0);
             lv_label_set_text_fmt(menu_text[1], "Square: %d", 0);
             lv_label_set_text_fmt(menu_text[2], "Sawtooth: %d", 0);
             lv_label_set_text_fmt(menu_text[3], "High Pass: %d", high_pass_gui);
