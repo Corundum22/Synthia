@@ -48,6 +48,12 @@ lv_obj_t* button_text;
 static lv_style_t bar_bg_style;
 static lv_style_t bar_ind_style;
 
+menu_state  menu_select_gui_prev = 3;
+
+char* ssin_gui = "Sine";
+char* striangle_gui = "Triangle";
+char* ssawtooth_gui = "Sawtooth";
+char* ssquare_gui = "Square";
 
 //SQU
 
@@ -243,6 +249,8 @@ void update_ui_cb(lv_timer_t* timer) {
     switch(menu_select_gui){
         case madsr:
             if(curr_scr != scr0){lv_scr_load(scr0); curr_scr = scr0;}
+            if(menu_select_gui != menu_select_gui_prev){lv_obj_clear_flag(menu_bar[0], LV_OBJ_FLAG_HIDDEN); lv_obj_clear_flag(menu_bar[2], LV_OBJ_FLAG_HIDDEN); menu_select_gui_prev = madsr;}
+
 
             lv_label_set_text_fmt(menu_text[0], "Attack: %d", attack_gui);
             lv_label_set_text_fmt(menu_text[1], "Decay: %d", decay_gui);
@@ -265,15 +273,14 @@ void update_ui_cb(lv_timer_t* timer) {
 
         case mwave:
             if(curr_scr != scr0){lv_scr_load(scr0); curr_scr = scr0;}
+            if(menu_select_gui != menu_select_gui_prev){lv_obj_add_flag(menu_bar[0], LV_OBJ_FLAG_HIDDEN); lv_obj_add_flag(menu_bar[2], LV_OBJ_FLAG_HIDDEN); menu_select_gui_prev = mwave;}
 
-            lv_label_set_text_fmt(menu_text[0], "Sine: %d", 0);
-            lv_label_set_text_fmt(menu_text[1], "Square: %d", 0);
-            lv_label_set_text_fmt(menu_text[2], "Sawtooth: %d", 0);
+            lv_label_set_text_fmt(menu_text[0], "Wave 1: %s", get_wave_name(wave_select1_gui));
+            lv_label_set_text_fmt(menu_text[1], "Blend Amount: %d", wave_blend_gui);
+            lv_label_set_text_fmt(menu_text[2], "Wave 2: %s", get_wave_name(wave_select2_gui));
             lv_label_set_text_fmt(menu_text[3], "High Pass: %d", high_pass_gui);
-            lv_bar_set_value(menu_bar[0], 1, LV_ANIM_OFF); //TODO
-            lv_bar_set_value(menu_bar[1], 2, LV_ANIM_OFF);
-            lv_bar_set_value(menu_bar[2], 3, LV_ANIM_OFF);
-            lv_bar_set_value(menu_bar[3], 4, LV_ANIM_OFF);
+            lv_bar_set_value(menu_bar[1], wave_blend_gui, LV_ANIM_OFF);
+            lv_bar_set_value(menu_bar[3], high_pass_gui, LV_ANIM_OFF);
                     
             update_visualizer_vals();       
 
@@ -285,7 +292,7 @@ void update_ui_cb(lv_timer_t* timer) {
             break;
 
         case msequencer_setup:
-            if(curr_scr != scr1){lv_scr_load(scr1); curr_scr = scr1;}
+            if(curr_scr != scr1){lv_scr_load(scr1); curr_scr = scr1; menu_select_gui_prev = msequencer_setup;}
             
             if(squ_enable_gui){
                 // Playback Mode
@@ -641,4 +648,19 @@ void update_midi_note_name(uint_fast8_t num){
         default:
     }
     midi_note_name[i] = '\0';
+}
+
+char* get_wave_name(wave_type wave_type){
+    switch(wave_type){
+        case ssin:
+            return ssin_gui;
+        case striangle:
+            return striangle_gui;
+        case ssawtooth:
+            return ssawtooth_gui;
+        case ssquare:
+            return ssquare_gui;
+        default:
+            return '\0';
+    }
 }
