@@ -130,7 +130,7 @@ static void copy_nh() {
 }
 
 static void copy_syn() {
-    wave_select1_syn = wave_select2_val;
+    wave_select1_syn = wave_select1_val;
     wave_blend_syn = wave_blend_val;
     wave_select2_syn = wave_select2_val;
     wave_blend_pair_syn = BLEND_VAL_MAX - wave_blend_val;

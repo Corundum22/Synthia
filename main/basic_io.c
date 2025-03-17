@@ -46,8 +46,6 @@ int_fast16_t squ_length_val = 64;
 int_fast16_t squ_tempo_val = 120;
 int_fast16_t squ_duration_val = 50;
 
-// Current channel state
-static adc_channel_t current_channel = MENU_POT_1;
 // ADC handle
 static adc_oneshot_unit_handle_t menu_adc_handle;
     
@@ -59,7 +57,7 @@ static adc_cali_handle_t menu_pot_4_cali_handle = NULL;
 static adc_cali_handle_t menu_low_pass_cali_handle = NULL;
 static adc_cali_handle_t menu_select_cali_handle = NULL;
 
-// Calibration ready variables
+// Calibration ready variables (deprecated)
 static bool do_pot_1_calibration;
 static bool do_pot_2_calibration;
 static bool do_pot_3_calibration;
@@ -87,6 +85,16 @@ static rotary_state pot_4_last_rotary = rwait;
 static rotary_state low_pass_last_rotary = rwait;
 static rotary_state select_last_rotary = rwait;
 
+// Extra speed trackers
+int extra_speed_1, extra_speed_2, extra_speed_3, extra_speed_4, extra_speed_select, extra_speed_low_pass = 1;
+
+// Encoder delta trackers
+int pot_1_delta, pot_2_delta, pot_3_delta, pot_4_delta, pot_low_pass_delta, pot_select_delta = 0;
+
+// Encoder fast_delta trackers
+// Note that the select_delta is intentionally absent
+int pot_1_fast_delta, pot_2_fast_delta, pot_3_fast_delta, pot_4_fast_delta, pot_low_pass_fast_delta;
+
 static int32_t rotary_encoder_interpret(uint_fast32_t mv_voltage, rotary_state* state);
 static bool adc_calibration_init(adc_unit_t unit, adc_channel_t channel, adc_atten_t atten, adc_cali_handle_t *out_handle);
 
@@ -109,33 +117,42 @@ static int saturation_add(int val_1, int val_2, int lower_bound, int upper_bound
     return result;
 }
 
-static void apply_deltas(int* pot_1_delta, int* pot_2_delta, int* pot_3_delta, int* pot_4_delta, int* pot_low_pass_delta, int* pot_select_delta) {
+static inline void update_fast_deltas() {
+    pot_1_fast_delta = pot_1_delta * extra_speed_1;
+    pot_2_fast_delta = pot_2_delta * extra_speed_2;
+    pot_3_fast_delta = pot_3_delta * extra_speed_3;
+    pot_4_fast_delta = pot_4_delta * extra_speed_4;
+    pot_low_pass_fast_delta = pot_low_pass_delta * extra_speed_low_pass;
+}
 
-    if (*pot_low_pass_delta) {
-        low_pass_val = saturation_add(low_pass_val, *pot_low_pass_delta, 0, LEDC_DUTY_MAX_VAL);
+static inline void apply_deltas() {
+
+    if (pot_low_pass_fast_delta) {
+        low_pass_val = saturation_add(low_pass_val, pot_low_pass_fast_delta, 0, LEDC_DUTY_MAX_VAL);
         apply_low_pass((uint8_t) low_pass_val);
     }
-    menu_select = saturation_add(menu_select, *pot_select_delta, 0, MAX_MENU_STATE_VAL);
+    menu_select = saturation_add(menu_select, pot_select_delta, 0, MAX_MENU_STATE_VAL);
+
     switch (menu_select) {
         case madsr:
-            attack_val = saturation_add(attack_val, *pot_1_delta, MIN_ENVELOPE_VAL, MAX_ENVELOPE_VAL);
-            decay_val = saturation_add(decay_val, *pot_2_delta, MIN_ENVELOPE_VAL, MAX_ENVELOPE_VAL);
-            sustain_val = saturation_add(sustain_val, *pot_3_delta, MIN_ENVELOPE_VAL, MAX_ENVELOPE_VAL);
-            release_val = saturation_add(release_val, *pot_4_delta, MIN_ENVELOPE_VAL, MAX_ENVELOPE_VAL);
+            attack_val = saturation_add(attack_val, pot_1_fast_delta, MIN_ENVELOPE_VAL, MAX_ENVELOPE_VAL);
+            decay_val = saturation_add(decay_val, pot_2_fast_delta, MIN_ENVELOPE_VAL, MAX_ENVELOPE_VAL);
+            sustain_val = saturation_add(sustain_val, pot_3_fast_delta, MIN_ENVELOPE_VAL, MAX_ENVELOPE_VAL);
+            release_val = saturation_add(release_val, pot_4_fast_delta, MIN_ENVELOPE_VAL, MAX_ENVELOPE_VAL);
 
             break;
         case mwave:
-            wave_select1_val = saturation_add((int) wave_select1_val, *pot_1_delta, 0, MAX_WAVE_NUMBER);
-            wave_blend_val = saturation_add(wave_blend_val, *pot_2_delta, BLEND_VAL_MIN, BLEND_VAL_MAX);
-            wave_select2_val = saturation_add((int) wave_select2_val, *pot_3_delta, 0, MAX_WAVE_NUMBER);
-            if (*pot_4_delta) {
-                high_pass_val = saturation_add(high_pass_val, *pot_4_delta, 0, LEDC_DUTY_MAX_VAL);
+            wave_select1_val = saturation_add((int) wave_select1_val, pot_1_fast_delta, 0, MAX_WAVE_NUMBER);
+            wave_blend_val = saturation_add(wave_blend_val, pot_2_fast_delta, BLEND_VAL_MIN, BLEND_VAL_MAX);
+            wave_select2_val = saturation_add((int) wave_select2_val, pot_3_fast_delta, 0, MAX_WAVE_NUMBER);
+            if (pot_4_fast_delta) {
+                high_pass_val = saturation_add(high_pass_val, pot_4_fast_delta, 0, LEDC_DUTY_MAX_VAL);
                 apply_high_pass((uint8_t) high_pass_val);
             }
 
             break;
         case msequencer_setup:
-            if (*pot_1_delta != 0) {
+            if (pot_1_fast_delta != 0) {
                 squ_enable_val = !squ_enable_val;
                 if (squ_enable_val) {
                     resume_squ_timer(squ_tempo_val);
@@ -143,12 +160,12 @@ static void apply_deltas(int* pot_1_delta, int* pot_2_delta, int* pot_3_delta, i
                     pause_squ_timer();
                 }
             }
-            squ_length_val = saturation_add(squ_length_val, *pot_2_delta, 0, SEQ_LEN);
-            if (*pot_3_delta) {
-                squ_tempo_val = saturation_add(squ_tempo_val, *pot_3_delta, 1, 255);
+            squ_length_val = saturation_add(squ_length_val, pot_2_fast_delta, 0, SEQ_LEN);
+            if (pot_3_fast_delta) {
+                squ_tempo_val = saturation_add(squ_tempo_val, pot_3_fast_delta, 1, 255);
                 update_squ_timer(squ_tempo_val);
             }
-            squ_duration_val = saturation_add(squ_duration_val, *pot_4_delta, 1, 255);
+            squ_duration_val = saturation_add(squ_duration_val, pot_4_fast_delta, 1, 255);
 
             break;
         default:
@@ -156,19 +173,45 @@ static void apply_deltas(int* pot_1_delta, int* pot_2_delta, int* pot_3_delta, i
             break;
     }
 
-    if (*pot_1_delta | *pot_2_delta | *pot_3_delta | *pot_4_delta | *pot_low_pass_delta | *pot_select_delta) {
+    if (pot_1_delta | pot_2_delta | pot_3_delta | pot_4_delta | pot_low_pass_delta | pot_select_delta) {
         //printf("\033[2JAttack: %03d  Decay: %03d  Sustain: %03d  Release: %03d\nLow pass: %03d  Current menu: %03d\nWave type: %03d\nSequencer enable: %03d  Sequencer clear: %03d\nNote 1: %03d  Note 2: %03d  Note 3: %03d  Note 4: %03d\nNote 5: %03d  Note 6: %03d  Note 7: %03d  Note 8: %03d\n", attack_val, decay_val, sustain_val, release_val, low_pass_val, menu_select, wave_select_val, sequencer_enable_val, sequencer_clear_val, squ_note_1_val, squ_note_2_val, squ_note_3_val, squ_note_4_val, squ_note_5_val, squ_note_6_val, squ_note_7_val, squ_note_8_val);
         // Allow task_data_split() to execute
         xSemaphoreGive(ySplitterSemaphore);
     }
     
-    *pot_1_delta =
-        *pot_2_delta =
-        *pot_3_delta =
-        *pot_4_delta =
-        *pot_low_pass_delta =
-        *pot_select_delta =
-        0;
+}
+
+static inline void update_extra_delta_speed() {
+    if (pot_1_delta != 0) {
+        extra_speed_1 += EXTRA_SPEED_INCREASE;
+    } else if (extra_speed_1 > EXTRA_SPEED_MINIMUM) {
+        extra_speed_1 -= EXTRA_SPEED_DECREASE;
+    }
+
+    if (pot_2_delta != 0) {
+        extra_speed_2 += EXTRA_SPEED_INCREASE;
+    } else if (extra_speed_2 > EXTRA_SPEED_MINIMUM) {
+        extra_speed_2 -= EXTRA_SPEED_DECREASE;
+    }
+
+    if (pot_3_delta != 0) {
+        extra_speed_3 += EXTRA_SPEED_INCREASE;
+    } else if (extra_speed_3 > EXTRA_SPEED_MINIMUM) {
+        extra_speed_3 -= EXTRA_SPEED_DECREASE;
+    }
+
+    if (pot_4_delta != 0) {
+        extra_speed_4 += EXTRA_SPEED_INCREASE;
+    } else if (extra_speed_4 > EXTRA_SPEED_MINIMUM) {
+        extra_speed_4 -= EXTRA_SPEED_DECREASE;
+    }
+
+    if (pot_low_pass_delta != 0) {
+        extra_speed_low_pass += EXTRA_SPEED_INCREASE;
+    } else if (extra_speed_low_pass > EXTRA_SPEED_MINIMUM) {
+        extra_speed_low_pass -= EXTRA_SPEED_DECREASE;
+    }
+
 }
 
 void apply_low_pass(uint8_t val_to_apply) {
@@ -183,64 +226,45 @@ void apply_high_pass(uint8_t val_to_apply) {
 
 void task_adc() {
 
-    int pot_1_delta, pot_2_delta, pot_3_delta, pot_4_delta, pot_low_pass_delta, pot_select_delta = 0;
-
     while (1) {
         
         int adc_result = 0;
-        ESP_ERROR_CHECK(adc_oneshot_read(menu_adc_handle, current_channel, &adc_result));
 
-        switch (current_channel) {
-            case MENU_POT_1:
-                if (do_pot_1_calibration)
-                    ESP_ERROR_CHECK(adc_cali_raw_to_voltage(menu_pot_1_cali_handle, adc_result, &adc_result));
-                pot_1_delta = rotary_encoder_interpret(adc_result, &pot_1_last_rotary);
-                current_channel = MENU_POT_2;
+        // menu pot 1
+        ESP_ERROR_CHECK(adc_oneshot_read(menu_adc_handle, MENU_POT_1, &adc_result));
+        ESP_ERROR_CHECK(adc_cali_raw_to_voltage(menu_pot_1_cali_handle, adc_result, &adc_result));
+        pot_1_delta = rotary_encoder_interpret(adc_result, &pot_1_last_rotary);
 
-                break;
-            case MENU_POT_2:
-                if (do_pot_2_calibration)
-                    ESP_ERROR_CHECK(adc_cali_raw_to_voltage(menu_pot_2_cali_handle, adc_result, &adc_result));
-                pot_2_delta = rotary_encoder_interpret(adc_result, &pot_2_last_rotary);
-                current_channel = MENU_POT_3;
+        // menu pot 2
+        ESP_ERROR_CHECK(adc_oneshot_read(menu_adc_handle, MENU_POT_2, &adc_result));
+        ESP_ERROR_CHECK(adc_cali_raw_to_voltage(menu_pot_2_cali_handle, adc_result, &adc_result));
+        pot_2_delta = rotary_encoder_interpret(adc_result, &pot_2_last_rotary);
 
-                break;
-            case MENU_POT_3:
-                if (do_pot_3_calibration)
-                    ESP_ERROR_CHECK(adc_cali_raw_to_voltage(menu_pot_3_cali_handle, adc_result, &adc_result));
-                pot_3_delta = rotary_encoder_interpret(adc_result, &pot_3_last_rotary);
-                current_channel = MENU_POT_4;
+        // menu pot 3
+        ESP_ERROR_CHECK(adc_oneshot_read(menu_adc_handle, MENU_POT_3, &adc_result));
+        ESP_ERROR_CHECK(adc_cali_raw_to_voltage(menu_pot_3_cali_handle, adc_result, &adc_result));
+        pot_3_delta = rotary_encoder_interpret(adc_result, &pot_3_last_rotary);
 
-                break;
-            case MENU_POT_4:
-                if (do_pot_4_calibration)
-                    ESP_ERROR_CHECK(adc_cali_raw_to_voltage(menu_pot_4_cali_handle, adc_result, &adc_result));
-                pot_4_delta = rotary_encoder_interpret(adc_result, &pot_4_last_rotary);
-                current_channel = LOW_PASS_POT;
+        // menu pot 4
+        ESP_ERROR_CHECK(adc_oneshot_read(menu_adc_handle, MENU_POT_4, &adc_result));
+        ESP_ERROR_CHECK(adc_cali_raw_to_voltage(menu_pot_4_cali_handle, adc_result, &adc_result));
+        pot_4_delta = rotary_encoder_interpret(adc_result, &pot_4_last_rotary);
 
-                break;
-            case LOW_PASS_POT:
-                if (do_low_pass_calibration)
-                    ESP_ERROR_CHECK(adc_cali_raw_to_voltage(menu_low_pass_cali_handle, adc_result, &adc_result));
-                pot_low_pass_delta = rotary_encoder_interpret(adc_result, &low_pass_last_rotary);
-                current_channel = SELECT_POT;
+        // low pass pot
+        ESP_ERROR_CHECK(adc_oneshot_read(menu_adc_handle, LOW_PASS_POT, &adc_result));
+        ESP_ERROR_CHECK(adc_cali_raw_to_voltage(menu_low_pass_cali_handle, adc_result, &adc_result));
+        pot_low_pass_delta = rotary_encoder_interpret(adc_result, &low_pass_last_rotary);
 
-                break;
-            case SELECT_POT:
-                if (do_select_calibration)
-                    ESP_ERROR_CHECK(adc_cali_raw_to_voltage(menu_select_cali_handle, adc_result, &adc_result));
-                pot_select_delta = rotary_encoder_interpret(adc_result, &select_last_rotary);
-                current_channel = MENU_POT_1;
-                
-                apply_deltas(&pot_1_delta, &pot_2_delta, &pot_3_delta, &pot_4_delta, &pot_low_pass_delta, &pot_select_delta);
+        // high pass pot
+        ESP_ERROR_CHECK(adc_oneshot_read(menu_adc_handle, SELECT_POT, &adc_result));
+        ESP_ERROR_CHECK(adc_cali_raw_to_voltage(menu_select_cali_handle, adc_result, &adc_result));
+        pot_select_delta = rotary_encoder_interpret(adc_result, &select_last_rotary);
 
-                break;
-            default:
-                current_channel = MENU_POT_1;
+        update_fast_deltas();
+    
+        apply_deltas();
 
-                break;
-        }
-
+        update_extra_delta_speed();
 
         vTaskDelay(pdMS_TO_TICKS(ANALOG_READ_LOOP_MS));
     }

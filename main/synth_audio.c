@@ -116,7 +116,6 @@ static inline void set_current_wave() {
     }
 }
 
-static uint8_t data_array[AUDIO_BUF_SIZE * NUM_DAC_CHANNELS];
 void task_audio_generate() {
 
     uint32_t time = 0;
@@ -126,6 +125,8 @@ void task_audio_generate() {
         // Set the current wavetable
         set_current_wave();
  
+        uint8_t data_array[AUDIO_BUF_SIZE * NUM_DAC_CHANNELS];
+
         for (uint_fast16_t i = 0; i < AUDIO_BUF_SIZE * NUM_DAC_CHANNELS; i += 2) {
             uint16_t data = audio_sample_get(time);
             
@@ -148,9 +149,9 @@ void dac_init() {
     // Configure DAC for lower 8 bits of output signal
     dac_continuous_config_t dac_config = {
         .chan_mask = DAC_CHANNEL_MASK_ALL,
-        .desc_num = 4, // TODO: select a proper value for this
+        .desc_num = 16,
         .buf_size = AUDIO_BUF_SIZE * NUM_DAC_CHANNELS,
-        .freq_hz = OUTPUT_SAMPLE_RATE,
+        .freq_hz = OUTPUT_SAMPLE_RATE * NUM_DAC_CHANNELS,
         .offset = 0,
         .clk_src = DAC_DIGI_CLK_SRC_APLL,
         .chan_mode = DAC_CHANNEL_MODE_ALTER,
