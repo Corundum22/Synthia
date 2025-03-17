@@ -11,6 +11,7 @@
 #include "global_header.h"
 #include "sequencer.h"
 #include "data_y_splitter.h"
+#include "basic_io.h"
 #include <string.h>
 
 
@@ -25,7 +26,8 @@ if (note_properties[i].is_sounding == true) {\
 
 dac_continuous_handle_t dac_handle;
 
-uint_fast16_t *current_wave = sin_array;
+uint_fast16_t *current_wave1 = sin_array;
+uint_fast16_t *current_wave2 = sin_array;
 
 
 static inline uint16_t wave(uint_fast8_t midi_note_number, uint_fast16_t multiply_val, uint_fast32_t time) {
@@ -34,8 +36,8 @@ static inline uint16_t wave(uint_fast8_t midi_note_number, uint_fast16_t multipl
 
     uint_fast32_t point_in_cycle = ((time * ratio_numerator) / ratio_denominator) & 0b11111111;
 
-    uint16_t result = current_wave[point_in_cycle];
-    result = (result * multiply_val) >> MULTIPLIER_WIDTH;
+    uint32_t result = (current_wave1[point_in_cycle] * wave_blend_syn) + (current_wave2[point_in_cycle] * wave_blend_pair_syn);
+    result = (result * multiply_val) >> (MULTIPLIER_WIDTH + BLEND_VAL_MAX_BITS);
     return result;
 }
 
@@ -79,25 +81,41 @@ static inline uint16_t audio_sample_get(uint32_t time) {
 }
 
 static inline void set_current_wave() {
-    switch (wave_select_syn) {
+    switch (wave_select1_syn) {
         case ssin:
-            current_wave = sin_array;
-            return;
+            current_wave1 = sin_array;
+            break;
         case striangle:
-            current_wave = triangle_array;
-            return;
+            current_wave1 = triangle_array;
+            break;
         case ssawtooth:
-            current_wave = sawtooth_array;
-            return;
+            current_wave1 = sawtooth_array;
+            break;
         case ssquare:
-            current_wave = square_array;
-            return;
+            current_wave1 = square_array;
+            break;
         default:
-            return;
+            break;
+    }
+
+    switch (wave_select2_syn) {
+        case ssin:
+            current_wave2 = sin_array;
+            break;
+        case striangle:
+            current_wave2 = triangle_array;
+            break;
+        case ssawtooth:
+            current_wave2 = sawtooth_array;
+            break;
+        case ssquare:
+            current_wave2 = square_array;
+            break;
+        default:
+            break;
     }
 }
 
-static uint8_t data_array[AUDIO_BUF_SIZE * NUM_DAC_CHANNELS];
 void task_audio_generate() {
 
     uint32_t time = 0;
@@ -107,6 +125,8 @@ void task_audio_generate() {
         // Set the current wavetable
         set_current_wave();
  
+        uint8_t data_array[AUDIO_BUF_SIZE * NUM_DAC_CHANNELS];
+
         for (uint_fast16_t i = 0; i < AUDIO_BUF_SIZE * NUM_DAC_CHANNELS; i += 2) {
             uint16_t data = audio_sample_get(time);
             
@@ -129,9 +149,9 @@ void dac_init() {
     // Configure DAC for lower 8 bits of output signal
     dac_continuous_config_t dac_config = {
         .chan_mask = DAC_CHANNEL_MASK_ALL,
-        .desc_num = 4, // TODO: select a proper value for this
+        .desc_num = 16,
         .buf_size = AUDIO_BUF_SIZE * NUM_DAC_CHANNELS,
-        .freq_hz = OUTPUT_SAMPLE_RATE,
+        .freq_hz = OUTPUT_SAMPLE_RATE * NUM_DAC_CHANNELS,
         .offset = 0,
         .clk_src = DAC_DIGI_CLK_SRC_APLL,
         .chan_mode = DAC_CHANNEL_MODE_ALTER,

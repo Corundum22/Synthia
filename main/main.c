@@ -27,9 +27,9 @@ TaskHandle_t data_split_task_handle;
 
 static void task_create() {
     xTaskCreate(task_data_split, "Data splitting task", 2048, NULL, 13, &data_split_task_handle);
-    xTaskCreate(task_audio_generate, "Audio Generation Task", 2048, NULL, 5, &audio_task_handle);
-    xTaskCreate(task_midi_uart, "MIDI UART Task", 4096, NULL, 10, &midi_uart_task_handle);
-    xTaskCreate(task_adc, "Potentiometer Checking Task", 2048, NULL, 7, &adc_task_handle);
+    xTaskCreate(task_audio_generate, "Audio Generation Task", 4096, NULL, 5, &audio_task_handle);
+    xTaskCreate(task_midi_uart, "MIDI UART Task", 2028, NULL, 10, &midi_uart_task_handle);
+    xTaskCreate(task_adc, "Potentiometer Checking Task", 1024, NULL, 7, &adc_task_handle);
     xTaskCreate(task_display, "Display Control Task", 4096*2, NULL, 11, &display_task_handle);
 }
 
