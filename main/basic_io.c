@@ -278,6 +278,7 @@ void gpio_interrupt_handler(void *args) {
                 note_properties[i].is_sounding = false;
                 note_properties[i].is_pressed = false;
             }
+            xSemaphoreGive(ySplitterSemaphore);
 
             // Test for PWM signals
             ESP_ERROR_CHECK(ledc_set_duty(LEDC_MODE, STATUS_LEDC_CHANNEL, 0b00111111));
