@@ -111,6 +111,7 @@ static void copy_gui() {
     squ_tempo_gui = squ_tempo_val;
     squ_duration_gui = squ_duration_val;
     note_data_deep_copy();
+    squ_pattern_deep_copy();
 
     squ_index_gui = current_squ_index;
 

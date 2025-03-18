@@ -81,17 +81,6 @@ uint_fast8_t squ_enable_old = -1;
 const int VIZ_PADDING = 2;
 const int BAR_HEIGHT = (VIZ_HEIGHT - NUM_BARS*9) / NUM_BARS;
 
-uint_fast8_t squ_test_pattern[SEQ_LEN] = { 
-    35, 35, 46, 46, 47, 47, 46, 46,
-    35, 35, 46, 46, 47, 47, 46, 46,
-    35, 35, 46, 46, 47, 47, 46, 46,
-    35, 35, 46, 46, 47, 47, 46, 46,
-    39, 39, 50, 50, 51, 51, 50, 50,
-    39, 39, 50, 50, 51, 51, 50, 50,
-    39, 39, 50, 50, 51, 51, 50, 50,
-    39, 39, 50, 50, 51, 51, 50, 50
-};
-
 const uint_fast16_t freq_notes[] = { 8, 8, 9, 9, 10, 10, 11, 12, 12, 13, 
     14, 15, 16, 17, 18, 19, 20, 21, 23, 24, 25, 27, 29, 30, //24
     32, 34, 36, 38, 41, 43, 46, 48, 51, 55, 58, 61, 65, 69, 
@@ -259,6 +248,7 @@ void update_ui_cb(lv_timer_t* timer) {
     if(menu_not_stable){
         lv_obj_clear_flag(roller, LV_OBJ_FLAG_HIDDEN);
         lv_roller_set_selected(roller, menu_select_gui, LV_ANIM_ON);
+
         if(menu_select_gui == menu_select_gui_prev){stable_counter++;}
 
         if(stable_counter > 10){
@@ -328,7 +318,7 @@ void update_ui_cb(lv_timer_t* timer) {
                     //Update playback pattern
                     if(squ_enable_old != squ_enable_gui){
                         for(int i = 0; i < 64; i++){
-                            update_midi_note_name(squ_test_pattern[i]);
+                            update_midi_note_name(squ_pattern[i]);
                             lv_label_set_text(array[i][1], midi_note_name);
                             lv_obj_set_style_border_color(array[i][0], (i+i/8)%2 ? BLACK_SQUARE_BORDER : WHITE_SQUARE_BORDER, LV_PART_MAIN | LV_STATE_DEFAULT);
                         }
@@ -343,14 +333,14 @@ void update_ui_cb(lv_timer_t* timer) {
                     
                     if(squ_enable_old != squ_enable_gui){
                         for(int i = 0; i < 64; i++){
-                            update_midi_note_name(squ_test_pattern[i]);
+                            update_midi_note_name(squ_pattern[i]);
                             lv_label_set_text(array[i][1], midi_note_name);
                             lv_obj_set_style_border_color(array[i][0], (i+i/8)%2 ? BLACK_SQUARE_BORDER : WHITE_SQUARE_BORDER, LV_PART_MAIN | LV_STATE_DEFAULT);
                         }
                     }
 
                     lv_obj_set_style_border_color(array[squ_index_gui][0], (squ_index_gui+squ_index_gui/8)%2 ? BLACK_SQUARE_BORDER : WHITE_SQUARE_BORDER, LV_PART_MAIN | LV_STATE_DEFAULT);
-                    update_midi_note_name(squ_test_pattern[squ_index_gui]);
+                    update_midi_note_name(squ_pattern[squ_index_gui]);
 
                     if(squ_index_gui == 0){
                         for(int i = 0; i < 64; i++){
@@ -501,9 +491,9 @@ void update_top_left(){
 }
 
 void create_roller(){
-    //on switch, lv_obj set parent
     roller = lv_roller_create(scr0);
     lv_roller_set_options(roller, "ADSR\nWave\nSequencer", LV_ANIM_ON);
+    lv_obj_add_flag(roller, LV_OBJ_FLAG_HIDDEN);
 }
 
 void update_visualizer_vals(){
