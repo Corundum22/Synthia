@@ -57,6 +57,7 @@ int_fast16_t squ_length_gui = 0;
 int_fast16_t squ_tempo_gui = 1;
 int_fast16_t squ_duration_gui = 1;
 int_fast16_t squ_index_gui = 0;
+uint_fast8_t squ_pattern_gui[SEQ_LEN];
 
 // GUI note data
 note_data note_properties_gui[NUM_VOICES + SEQ_VOICES] = {{
@@ -72,6 +73,7 @@ static void copy_squ();
 static void copy_nh();
 static void copy_syn();
 static inline void note_data_deep_copy();
+static inline void squ_pattern_deep_copy();
 
 
 
@@ -143,5 +145,11 @@ static inline void note_data_deep_copy() {
         note_properties_gui[i].note_num = note_properties_slow[i].note_num;
         note_properties_gui[i].envelope_state = note_properties_slow[i].envelope_state;
         note_properties_gui[i].multiplier = note_properties_slow[i].multiplier;
+    }
+}
+
+static inline void squ_pattern_deep_copy() {
+    for(int i = 0; i < SEQ_LEN; i++){
+        squ_pattern_gui[i] = squ_pattern[i];
     }
 }

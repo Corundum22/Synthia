@@ -339,8 +339,8 @@ void update_ui_cb(lv_timer_t* timer) {
 
                 }
                 else{
-
                     //Programming Mode
+                    
                     if(squ_enable_old != squ_enable_gui){
                         for(int i = 0; i < 64; i++){
                             update_midi_note_name(squ_test_pattern[i]);
