@@ -43,7 +43,7 @@ void uart_init() {
     printf("uart driver installed\n");
     ESP_ERROR_CHECK(uart_param_config(MIDI_UART_NUM, &midi_uart_conf));
     printf("uart paramaters configured\n");
-    ESP_ERROR_CHECK(uart_set_pin(UART_NUM_2, 17, 16, 19, 18));
+    ESP_ERROR_CHECK(uart_set_pin(UART_NUM_2, -1, 16, 19, 18));
                                 // uart num, tx, rx, rts, cts
     printf("uart pin set\n");
 

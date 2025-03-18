@@ -25,7 +25,7 @@
 #define LOW_PASS_LEDC_CHANNEL     LEDC_CHANNEL_2
 
 #define STATUS_LEDC       2
-#define HIGH_PASS_LEDC    12
+#define HIGH_PASS_LEDC    17
 #define LOW_PASS_LEDC     14
 
 #define MENU_POT_1    ADC_CHANNEL_0 // gpio36
