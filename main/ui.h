@@ -12,6 +12,7 @@ void create_ui();
 void create_menu();
 void create_squ();
 void create_visualizer();
+void create_roller();
 
 
 void generic_obj_format(lv_obj_t* o, lv_color_t c);

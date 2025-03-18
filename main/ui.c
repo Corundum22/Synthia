@@ -10,7 +10,7 @@
 
 
 /*
-TODO:   add menu roller
+TODO:   fix menu actions
 
 ASK:    what the seq's interface is gonna look like f
 */
@@ -48,7 +48,7 @@ lv_obj_t* button_text;
 static lv_style_t bar_bg_style;
 static lv_style_t bar_ind_style;
 
-menu_state  menu_select_gui_prev = 3;
+menu_state  menu_select_gui_prev = madsr;
 
 char* ssin_gui = "Sine";
 char* striangle_gui = "Triangle";
@@ -244,107 +244,136 @@ uint16_t bar_vals[NUM_BARS];
 
 uint32_t mask = 0;
 
+//ROLLER
+
+bool menu_not_stable = false;
+
+uint_fast16_t stable_counter = 0;
+lv_obj_t* roller = NULL;
+
+
 void update_ui_cb(lv_timer_t* timer) {
     
-    switch(menu_select_gui){
-        case madsr:
-            if(curr_scr != scr0){lv_scr_load(scr0); curr_scr = scr0;}
-            if(menu_select_gui != menu_select_gui_prev){lv_obj_clear_flag(menu_bar[0], LV_OBJ_FLAG_HIDDEN); lv_obj_clear_flag(menu_bar[2], LV_OBJ_FLAG_HIDDEN); menu_select_gui_prev = madsr;}
+    if(menu_select_gui != menu_select_gui_prev){menu_not_stable = true;}
 
+    if(menu_not_stable){
+        lv_obj_clear_flag(roller, LV_OBJ_FLAG_HIDDEN);
+        lv_roller_set_selected(roller, menu_select_gui, LV_ANIM_ON);
+        if(menu_select_gui == menu_select_gui_prev){stable_counter++;}
 
-            lv_label_set_text_fmt(menu_text[0], "Attack: %d", attack_gui);
-            lv_label_set_text_fmt(menu_text[1], "Decay: %d", decay_gui);
-            lv_label_set_text_fmt(menu_text[2], "Sustain: %d", sustain_gui);
-            lv_label_set_text_fmt(menu_text[3], "Release: %d", release_gui);
-            lv_bar_set_value(menu_bar[0], attack_gui, LV_ANIM_OFF);
-            lv_bar_set_value(menu_bar[1], decay_gui, LV_ANIM_OFF);
-            lv_bar_set_value(menu_bar[2], sustain_gui, LV_ANIM_OFF);
-            lv_bar_set_value(menu_bar[3], release_gui, LV_ANIM_OFF);
-
-            update_visualizer_vals();
-
-            for(int i = 0; i < NUM_BARS; i++){
-                lv_bar_set_value(bars[i], bar_vals[i], LV_ANIM_OFF);
+        if(stable_counter > 10){
+            menu_not_stable = false;
+            stable_counter = 0;
+            lv_obj_add_flag(roller, LV_OBJ_FLAG_HIDDEN);
+            if(menu_select_gui == madsr || menu_select_gui == mwave){
+                lv_obj_set_parent(roller, scr0);
             }
-            
-
-            update_top_left();
-            break;
-
-        case mwave:
-            if(curr_scr != scr0){lv_scr_load(scr0); curr_scr = scr0;}
-            if(menu_select_gui != menu_select_gui_prev){lv_obj_add_flag(menu_bar[0], LV_OBJ_FLAG_HIDDEN); lv_obj_add_flag(menu_bar[2], LV_OBJ_FLAG_HIDDEN); menu_select_gui_prev = mwave;}
-
-            lv_label_set_text_fmt(menu_text[0], "Wave 1: %s", get_wave_name(wave_select1_gui));
-            lv_label_set_text_fmt(menu_text[1], "Blend Amount: %d", wave_blend_gui);
-            lv_label_set_text_fmt(menu_text[2], "Wave 2: %s", get_wave_name(wave_select2_gui));
-            lv_label_set_text_fmt(menu_text[3], "High Pass: %d", high_pass_gui);
-            lv_bar_set_value(menu_bar[1], wave_blend_gui, LV_ANIM_OFF);
-            lv_bar_set_value(menu_bar[3], high_pass_gui, LV_ANIM_OFF);
-                    
-            update_visualizer_vals();       
-
-            for(int i = 0; i < NUM_BARS; i++){
-                lv_bar_set_value(bars[i], bar_vals[i], LV_ANIM_OFF);
+            if(menu_select_gui == msequencer_setup){
+                lv_obj_set_parent(roller, scr1);
             }
-            
-            update_top_left();
-            break;
-
-        case msequencer_setup:
-            if(curr_scr != scr1){lv_scr_load(scr1); curr_scr = scr1; menu_select_gui_prev = msequencer_setup;}
-            
-            if(squ_enable_gui){
-                // Playback Mode
-
-                //Update playback pattern
-                if(squ_enable_old != squ_enable_gui){
-                    for(int i = 0; i < 64; i++){
-                        update_midi_note_name(squ_test_pattern[i]);
-                        lv_label_set_text(array[i][1], midi_note_name);
-                        lv_obj_set_style_border_color(array[i][0], (i+i/8)%2 ? BLACK_SQUARE_BORDER : WHITE_SQUARE_BORDER, LV_PART_MAIN | LV_STATE_DEFAULT);
-                    }
-                }
-                uint_fast8_t prev = (squ_index_gui+63)%64;
-                lv_obj_set_style_border_color(array[prev][0], (prev+prev/8)%2 ? BLACK_SQUARE_BORDER : WHITE_SQUARE_BORDER, LV_PART_MAIN | LV_STATE_DEFAULT);
-                lv_obj_set_style_border_color(array[squ_index_gui][0], lv_color_hex(0xff0000), LV_PART_MAIN | LV_STATE_DEFAULT);
-
-            }
-            else{
-
-                //Programming Mode
-                if(squ_enable_old != squ_enable_gui){
-                    for(int i = 0; i < 64; i++){
-                        update_midi_note_name(squ_test_pattern[i]);
-                        lv_label_set_text(array[i][1], midi_note_name);
-                        lv_obj_set_style_border_color(array[i][0], (i+i/8)%2 ? BLACK_SQUARE_BORDER : WHITE_SQUARE_BORDER, LV_PART_MAIN | LV_STATE_DEFAULT);
-                    }
-                }
-
-                lv_obj_set_style_border_color(array[squ_index_gui][0], (squ_index_gui+squ_index_gui/8)%2 ? BLACK_SQUARE_BORDER : WHITE_SQUARE_BORDER, LV_PART_MAIN | LV_STATE_DEFAULT);
-                update_midi_note_name(squ_test_pattern[squ_index_gui]);
-
-                if(squ_index_gui == 0){
-                    for(int i = 0; i < 64; i++){
-                        lv_label_set_text(array[i][1], " ");
-                    }
-                }
-
-                lv_label_set_text_fmt(array[squ_index_gui][1], "%s", midi_note_name);
-                lv_obj_set_style_border_color(array[(squ_index_gui+1)%64][0], lv_color_hex(0x0000ff), LV_PART_MAIN | LV_STATE_DEFAULT);
-            }
-            
-            lv_label_set_text_fmt(progress_text, "Progress: %d/%d", squ_index_gui+1, squ_length_gui);
-            lv_label_set_text(enable_text, squ_enable_gui ? "Programming Mode" : "Playback Mode");
-            lv_label_set_text_fmt(length_text, "Length: %d", squ_length_gui);
-            lv_label_set_text_fmt(tempo_text, "Tempo: %d", squ_tempo_gui);
-            lv_label_set_text_fmt(duration_text, "Duration: %d%%", squ_duration_gui);
-
-            lv_bar_set_value(progress_bar, squ_index_gui, 1);
-            squ_enable_old = squ_enable_gui;
-            break;
-
+        }
     }
+    else {
+        switch(menu_select_gui){
+            case madsr:
+                if(curr_scr != scr0){lv_scr_load(scr0); curr_scr = scr0;}
+                if(menu_select_gui != menu_select_gui_prev){lv_obj_clear_flag(menu_bar[0], LV_OBJ_FLAG_HIDDEN); lv_obj_clear_flag(menu_bar[2], LV_OBJ_FLAG_HIDDEN); menu_select_gui_prev = madsr;}
+
+
+                lv_label_set_text_fmt(menu_text[0], "Attack: %d", attack_gui);
+                lv_label_set_text_fmt(menu_text[1], "Decay: %d", decay_gui);
+                lv_label_set_text_fmt(menu_text[2], "Sustain: %d", sustain_gui);
+                lv_label_set_text_fmt(menu_text[3], "Release: %d", release_gui);
+                lv_bar_set_value(menu_bar[0], attack_gui, LV_ANIM_OFF);
+                lv_bar_set_value(menu_bar[1], decay_gui, LV_ANIM_OFF);
+                lv_bar_set_value(menu_bar[2], sustain_gui, LV_ANIM_OFF);
+                lv_bar_set_value(menu_bar[3], release_gui, LV_ANIM_OFF);
+
+                update_visualizer_vals();
+
+                for(int i = 0; i < NUM_BARS; i++){
+                    lv_bar_set_value(bars[i], bar_vals[i], LV_ANIM_OFF);
+                }
+                
+
+                update_top_left();
+                break;
+
+            case mwave:
+                if(curr_scr != scr0){lv_scr_load(scr0); curr_scr = scr0;}
+                if(menu_select_gui != menu_select_gui_prev){lv_obj_add_flag(menu_bar[0], LV_OBJ_FLAG_HIDDEN); lv_obj_add_flag(menu_bar[2], LV_OBJ_FLAG_HIDDEN); menu_select_gui_prev = mwave;}
+
+                lv_label_set_text_fmt(menu_text[0], "Wave 1: %s", get_wave_name(wave_select1_gui));
+                lv_label_set_text_fmt(menu_text[1], "Blend Amount: %d", wave_blend_gui);
+                lv_label_set_text_fmt(menu_text[2], "Wave 2: %s", get_wave_name(wave_select2_gui));
+                lv_label_set_text_fmt(menu_text[3], "High Pass: %d", high_pass_gui);
+                lv_bar_set_value(menu_bar[1], wave_blend_gui, LV_ANIM_OFF);
+                lv_bar_set_value(menu_bar[3], high_pass_gui, LV_ANIM_OFF);
+                        
+                update_visualizer_vals();       
+
+                for(int i = 0; i < NUM_BARS; i++){
+                    lv_bar_set_value(bars[i], bar_vals[i], LV_ANIM_OFF);
+                }
+                
+                update_top_left();
+                break;
+
+            case msequencer_setup:
+                if(curr_scr != scr1){lv_scr_load(scr1); curr_scr = scr1; menu_select_gui_prev = msequencer_setup;}
+                
+                if(squ_enable_gui){
+                    // Playback Mode
+
+                    //Update playback pattern
+                    if(squ_enable_old != squ_enable_gui){
+                        for(int i = 0; i < 64; i++){
+                            update_midi_note_name(squ_test_pattern[i]);
+                            lv_label_set_text(array[i][1], midi_note_name);
+                            lv_obj_set_style_border_color(array[i][0], (i+i/8)%2 ? BLACK_SQUARE_BORDER : WHITE_SQUARE_BORDER, LV_PART_MAIN | LV_STATE_DEFAULT);
+                        }
+                    }
+                    uint_fast8_t prev = (squ_index_gui+63)%64;
+                    lv_obj_set_style_border_color(array[prev][0], (prev+prev/8)%2 ? BLACK_SQUARE_BORDER : WHITE_SQUARE_BORDER, LV_PART_MAIN | LV_STATE_DEFAULT);
+                    lv_obj_set_style_border_color(array[squ_index_gui][0], lv_color_hex(0xff0000), LV_PART_MAIN | LV_STATE_DEFAULT);
+
+                }
+                else{
+
+                    //Programming Mode
+                    if(squ_enable_old != squ_enable_gui){
+                        for(int i = 0; i < 64; i++){
+                            update_midi_note_name(squ_test_pattern[i]);
+                            lv_label_set_text(array[i][1], midi_note_name);
+                            lv_obj_set_style_border_color(array[i][0], (i+i/8)%2 ? BLACK_SQUARE_BORDER : WHITE_SQUARE_BORDER, LV_PART_MAIN | LV_STATE_DEFAULT);
+                        }
+                    }
+
+                    lv_obj_set_style_border_color(array[squ_index_gui][0], (squ_index_gui+squ_index_gui/8)%2 ? BLACK_SQUARE_BORDER : WHITE_SQUARE_BORDER, LV_PART_MAIN | LV_STATE_DEFAULT);
+                    update_midi_note_name(squ_test_pattern[squ_index_gui]);
+
+                    if(squ_index_gui == 0){
+                        for(int i = 0; i < 64; i++){
+                            lv_label_set_text(array[i][1], " ");
+                        }
+                    }
+
+                    lv_label_set_text_fmt(array[squ_index_gui][1], "%s", midi_note_name);
+                    lv_obj_set_style_border_color(array[(squ_index_gui+1)%64][0], lv_color_hex(0x0000ff), LV_PART_MAIN | LV_STATE_DEFAULT);
+                }
+                
+                lv_label_set_text_fmt(progress_text, "Progress: %d/%d", squ_index_gui+1, squ_length_gui);
+                lv_label_set_text(enable_text, squ_enable_gui ? "Programming Mode" : "Playback Mode");
+                lv_label_set_text_fmt(length_text, "Length: %d", squ_length_gui);
+                lv_label_set_text_fmt(tempo_text, "Tempo: %d", squ_tempo_gui);
+                lv_label_set_text_fmt(duration_text, "Duration: %d%%", squ_duration_gui);
+
+                lv_bar_set_value(progress_bar, squ_index_gui, 1);
+                squ_enable_old = squ_enable_gui;
+                break;
+        }
+    }
+    menu_select_gui_prev = menu_select_gui;
 }
 
 void create_menu() {
@@ -471,6 +500,12 @@ void update_top_left(){
     lv_label_set_text_fmt(button_text, "%s", midi_note_name);
 }
 
+void create_roller(){
+    //on switch, lv_obj set parent
+    roller = lv_roller_create(scr0);
+    lv_roller_set_options(roller, "ADSR\nWave\nSequencer", LV_ANIM_ON);
+}
+
 void update_visualizer_vals(){
 
     mask = 0;
@@ -561,6 +596,7 @@ void create_ui(){
     create_menu();
     create_squ();
     create_visualizer();
+    create_roller();
 }
 
 void update_midi_note_name(uint_fast8_t num){
