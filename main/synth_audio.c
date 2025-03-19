@@ -29,8 +29,19 @@ dac_continuous_handle_t dac_handle;
 uint_fast16_t *current_wave1 = sin_array;
 uint_fast16_t *current_wave2 = sin_array;
 
+// Defines how many times the time variable should increment before old_samples_index increments
+#define OLD_QUALITY_SAMPLE_TIME_FACTOR 16
+// OLD_SAMPLES_SIZE must be a multiple of 2
+#define OLD_SAMPLES_SIZE 8192
+uint_fast16_t old_samples[OLD_SAMPLES_SIZE] = { 0 };
+uint_fast16_t old_samples_index = 0;
 
-static inline uint16_t wave(uint_fast8_t midi_note_number, uint_fast16_t multiply_val, uint_fast32_t time) {
+
+static inline uint_fast16_t get_old_samples(uint32_t samples_ago) {
+    return old_samples[(old_samples_index - samples_ago) & OLD_SAMPLES_SIZE];
+}
+
+static inline uint32_t wave(uint_fast8_t midi_note_number, uint_fast16_t multiply_val, uint_fast32_t time) {
     uint_fast32_t ratio_numerator = ratio_num[midi_note_number];
     uint_fast32_t ratio_denominator = ratio_denom[midi_note_number];
 
@@ -42,7 +53,7 @@ static inline uint16_t wave(uint_fast8_t midi_note_number, uint_fast16_t multipl
 }
 
 static inline uint16_t audio_sample_get(uint32_t time) {
-    uint16_t data = 0;
+    uint32_t data = 0;
 
     #if NUM_COMB_VOICES >= 1
         GET_NOTE(0)
@@ -76,7 +87,10 @@ static inline uint16_t audio_sample_get(uint32_t time) {
     #endif
 
     data /= (NUM_VOICES + SEQ_VOICES);
-    
+
+    // This should introduce a delay of 15000 * 4 / 44100 seconds
+    data += get_old_samples(15000);
+
     return data;
 }
 
@@ -132,6 +146,11 @@ void task_audio_generate() {
             
             data_array[i] = (uint8_t) data;
             data_array[i + 1] = (uint8_t) (data >> 8);
+
+            old_samples[old_samples_index] = data;
+            // This condition is true when i % OLD_QUALITY_REDUCTION_FACTOR == 0
+            if (i & OLD_QUALITY_SAMPLE_TIME_FACTOR) old_samples_index++;
+            if (old_samples_index >= OLD_SAMPLES_SIZE) old_samples_index = 0;
         
             time++;
         }
