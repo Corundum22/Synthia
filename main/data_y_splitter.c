@@ -33,7 +33,6 @@ int_fast16_t squ_enable_squ = 0;
 int_fast16_t squ_length_squ = 0;
 int_fast16_t squ_tempo_squ = 1;
 int_fast16_t squ_duration_squ = 1;
-int_fast16_t current_squ_index = 0;
 
 // GUI always accessible values
 menu_state menu_select_gui = madsr;

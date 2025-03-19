@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <string.h>
+#include "basic_io.h"
 #include "esp_err.h"
 #include "freertos/FreeRTOS.h"
 #include "driver/uart.h"
@@ -87,48 +88,50 @@ uint_fast8_t test_pattern_HOTTOGO[SEQ_LEN] = {
 
 esp_timer_handle_t sequencer_timer_handle;
 
-int_fast8_t current_seq_index = 0;
+int_fast8_t current_squ_index = 0;
+int_fast8_t current_squ_program_index = 0;
 
+bool next_is_on_squ_press = true;
 
 void sequencer_timer_callback() {
 	// Execute if sequencer is enabled
     if (squ_enable_squ) {
-        set_squ_keyrelease(squ_pattern[(current_seq_index + SEQ_LEN - 1) % SEQ_LEN]);
-        set_squ_keypress(squ_pattern[current_seq_index]);
+        if (next_is_on_squ_press) {
 
-        current_seq_index++;
+            set_squ_keypress(squ_pattern[current_squ_index]);
 
-        if (current_seq_index >= squ_length_squ) {
-            current_seq_index = 0;
+        } else {
+
+            set_squ_keyrelease(squ_pattern[current_squ_index]);
+
+            current_squ_index++;
+            if (current_squ_index >= squ_length_squ) current_squ_index = 0;
+
         }
-    }
-    else{
-        // If sequencer is disabled we want to start the programming mode... so put that here...
-        // This is where we will be able to program the sequencer
 
-
-        // how it works is when you come into this mode first it will start on the 0th index of the pattern array
-        // it will write the key you press to that index of the pattern array
-        // it will increment the index and wait for the next key press
-        // continue this until the index is at the knob value for the maximum pattern length, so squ_length_squ
-        // it will go back to the beginning from there because you might've made a mistake or something
-        // start playing from the beginning of the pattern when you enable the sequencer again
-        // have some way to enter rests... I think this could just be a very low midi value but I'm not sure
     }
 }
 
+inline static int_fast16_t get_squ_duration_sided() {
+    return (next_is_on_squ_press) ? squ_duration_squ : (SQU_DURATION_MAX - squ_duration_squ);
+}
+
 void update_squ_timer(int_fast16_t new_val) {
-    uint64_t us_new_val = BPM_US_FACTOR / (new_val * TEMPO_PERIOD_MULTIPLIER);
+    int_fast16_t squ_duration_sided = get_squ_duration_sided();
+
+    uint64_t us_new_val = ((BPM_US_FACTOR / (new_val * TEMPO_PERIOD_MULTIPLIER)) * squ_duration_sided) >> SQU_DURATION_WIDTH;
     ESP_ERROR_CHECK(esp_timer_restart(sequencer_timer_handle, us_new_val));
 }
 
 void pause_squ_timer() {
     ESP_ERROR_CHECK(esp_timer_stop(sequencer_timer_handle));
-    set_squ_keyrelease(squ_pattern[(current_seq_index + SEQ_LEN - 1) % SEQ_LEN]);
+    set_squ_keyrelease(squ_pattern[(current_squ_index + SEQ_LEN - 1) % SEQ_LEN]);
 }
 
 void resume_squ_timer(int_fast16_t us_val) {
-    uint64_t us_new_val = BPM_US_FACTOR / (us_val * TEMPO_PERIOD_MULTIPLIER);
+    int_fast16_t squ_duration_sided = get_squ_duration_sided();
+
+    uint64_t us_new_val = ((BPM_US_FACTOR / (us_val * TEMPO_PERIOD_MULTIPLIER)) * squ_duration_sided) >> SQU_DURATION_WIDTH;
     ESP_ERROR_CHECK(esp_timer_start_periodic(sequencer_timer_handle, us_new_val));
 }
 

@@ -117,6 +117,13 @@ static int saturation_add(int val_1, int val_2, int lower_bound, int upper_bound
     return result;
 }
 
+static int wrap_add(int val_1, int val_2, int lower_bound, int upper_bound) {
+    int result = val_1 + val_2;
+    if (result < lower_bound) result = upper_bound;
+    else if (result > upper_bound) result = lower_bound;
+    return result;
+}
+
 static inline void update_fast_deltas() {
     pot_1_fast_delta = pot_1_delta * extra_speed_1;
     pot_2_fast_delta = pot_2_delta * extra_speed_2;
@@ -131,7 +138,7 @@ static inline void apply_deltas() {
         low_pass_val = saturation_add(low_pass_val, pot_low_pass_fast_delta, 0, LEDC_DUTY_MAX_VAL);
         apply_low_pass((uint8_t) low_pass_val);
     }
-    menu_select = saturation_add(menu_select, pot_select_delta, 0, MAX_MENU_STATE_VAL);
+    menu_select = wrap_add(menu_select, pot_select_delta, 0, MAX_MENU_STATE_VAL);
 
     switch (menu_select) {
         case madsr:
@@ -165,7 +172,7 @@ static inline void apply_deltas() {
                 squ_tempo_val = saturation_add(squ_tempo_val, pot_3_fast_delta, 1, 255);
                 update_squ_timer(squ_tempo_val);
             }
-            squ_duration_val = saturation_add(squ_duration_val, pot_4_fast_delta, 1, 255);
+            squ_duration_val = saturation_add(squ_duration_val, pot_4_fast_delta, 1, SQU_DURATION_MAX);
 
             break;
         default:
@@ -300,6 +307,7 @@ void gpio_interrupt_handler(void *args) {
             ESP_ERROR_CHECK(ledc_update_duty(LEDC_MODE, HIGH_PASS_LEDC_CHANNEL));
             ESP_ERROR_CHECK(ledc_set_duty(LEDC_MODE, LOW_PASS_LEDC_CHANNEL, 0b00000111));
             ESP_ERROR_CHECK(ledc_update_duty(LEDC_MODE, LOW_PASS_LEDC_CHANNEL));
+
 
             // Test to ensure extra button and clipping outputs are functional
             ESP_ERROR_CHECK(gpio_set_level(SOFT_CLIPPING_EN, 1));

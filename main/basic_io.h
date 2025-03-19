@@ -51,6 +51,9 @@
 #define BLEND_VAL_MAX            255
 #define BLEND_VAL_MAX_BITS       8
 
+#define SQU_DURATION_WIDTH       8
+#define SQU_DURATION_MAX         255
+
 #define EXTRA_SPEED_INCREASE 35
 #define EXTRA_SPEED_DECREASE 1
 #define EXTRA_SPEED_MINIMUM 1
