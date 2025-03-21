@@ -151,7 +151,7 @@ void dac_init() {
         .chan_mask = DAC_CHANNEL_MASK_ALL,
         .desc_num = 16,
         .buf_size = AUDIO_BUF_SIZE * NUM_DAC_CHANNELS,
-        .freq_hz = OUTPUT_SAMPLE_RATE * NUM_DAC_CHANNELS,
+        .freq_hz = OUTPUT_SAMPLE_RATE,
         .offset = 0,
         .clk_src = DAC_DIGI_CLK_SRC_APLL,
         .chan_mode = DAC_CHANNEL_MODE_ALTER,
