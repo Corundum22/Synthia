@@ -88,8 +88,8 @@ static inline uint16_t audio_sample_get(uint32_t time) {
 
     data /= (NUM_VOICES + SEQ_VOICES);
 
-    // This should introduce a delay of 15000 * 4 / 44100 seconds
-    data += get_old_samples(15000);
+    // This should introduce a delay of 6000 * 16 / 44100 seconds
+    data += get_old_samples(6000); // TODO: average with neighboring samples to prevent high freq artifacts due to alias of what are originally even higher freq components
 
     return data;
 }
