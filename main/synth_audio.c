@@ -30,15 +30,15 @@ uint_fast16_t *current_wave1 = sin_array;
 uint_fast16_t *current_wave2 = sin_array;
 
 // Defines how many times the time variable should increment before old_samples_index increments
-#define OLD_QUALITY_SAMPLE_TIME_FACTOR 16
+#define OLD_QUALITY_SAMPLE_TIME_FACTOR 1
 // OLD_SAMPLES_SIZE must be a multiple of 2
 #define OLD_SAMPLES_SIZE 8192
-uint_fast16_t old_samples[OLD_SAMPLES_SIZE] = { 0 };
-uint_fast16_t old_samples_index = 0;
+uint16_t old_samples[OLD_SAMPLES_SIZE] = { 0 };
+uint16_t old_samples_index = 0;
 
 
-static inline uint_fast16_t get_old_samples(uint32_t samples_ago) {
-    return old_samples[(old_samples_index - samples_ago) & OLD_SAMPLES_SIZE];
+static inline uint16_t get_old_samples(uint32_t samples_ago) {
+    return old_samples[(old_samples_index - samples_ago) & 0b1111111111111];
 }
 
 static inline uint32_t wave(uint_fast8_t midi_note_number, uint_fast16_t multiply_val, uint_fast32_t time) {
@@ -89,7 +89,13 @@ static inline uint16_t audio_sample_get(uint32_t time) {
     data /= (NUM_VOICES + SEQ_VOICES);
 
     // This should introduce a delay of 6000 * 16 / 44100 seconds
-    data += get_old_samples(6000); // TODO: average with neighboring samples to prevent high freq artifacts due to alias of what are originally even higher freq components
+    data += get_old_samples(6000) / 2; // TODO: average with neighboring samples to prevent high freq artifacts due to alias of what are originally even higher freq components
+    data += get_old_samples(6002) / 3;
+    data += get_old_samples(6004) / 4;
+    data += get_old_samples(6006) / 5;
+    data += get_old_samples(5998) / 3;
+    data += get_old_samples(5996) / 4;
+    data += get_old_samples(5994) / 5;
 
     return data;
 }
@@ -170,7 +176,7 @@ void dac_init() {
         .chan_mask = DAC_CHANNEL_MASK_ALL,
         .desc_num = 16,
         .buf_size = AUDIO_BUF_SIZE * NUM_DAC_CHANNELS,
-        .freq_hz = OUTPUT_SAMPLE_RATE * NUM_DAC_CHANNELS,
+        .freq_hz = OUTPUT_SAMPLE_RATE,
         .offset = 0,
         .clk_src = DAC_DIGI_CLK_SRC_APLL,
         .chan_mode = DAC_CHANNEL_MODE_ALTER,
