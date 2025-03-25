@@ -30,7 +30,7 @@ uint_fast16_t *current_wave1 = sin_array;
 uint_fast16_t *current_wave2 = sin_array;
 
 
-static inline uint16_t wave(uint_fast8_t midi_note_number, uint_fast16_t multiply_val, uint_fast32_t time) {
+static inline uint32_t wave(uint_fast8_t midi_note_number, uint_fast16_t multiply_val, uint_fast32_t time) {
     uint_fast32_t ratio_numerator = ratio_num[midi_note_number];
     uint_fast32_t ratio_denominator = ratio_denom[midi_note_number];
 
@@ -41,8 +41,8 @@ static inline uint16_t wave(uint_fast8_t midi_note_number, uint_fast16_t multipl
     return result;
 }
 
-static inline uint16_t audio_sample_get(uint32_t time) {
-    uint16_t data = 0;
+static inline uint_fast16_t audio_sample_get(uint32_t time) {
+    uint32_t data = 0;
 
     #if NUM_COMB_VOICES >= 1
         GET_NOTE(0)
@@ -77,7 +77,7 @@ static inline uint16_t audio_sample_get(uint32_t time) {
 
     data /= (NUM_VOICES + SEQ_VOICES);
     
-    return data;
+    return (uint_fast16_t) (data >> 8);
 }
 
 static inline void set_current_wave() {
@@ -127,13 +127,10 @@ void task_audio_generate() {
  
         uint8_t data_array[AUDIO_BUF_SIZE * NUM_DAC_CHANNELS];
 
-        for (uint_fast16_t i = 0; i < AUDIO_BUF_SIZE * NUM_DAC_CHANNELS; i += 2) {
-            uint16_t data = audio_sample_get(time);
+        for (uint_fast16_t i = 0; i < AUDIO_BUF_SIZE * NUM_DAC_CHANNELS; i += NUM_DAC_CHANNELS) {
+            uint_fast16_t data = audio_sample_get(time);
             
             data_array[i] = (uint8_t) data;
-            data_array[i + 1] = (uint8_t) (data >> 8);
-            //data_array[i + 1] = (uint8_t) data;
-            //data_array[i] = (uint8_t) (data >> 8);
         
             time++;
         }
@@ -150,13 +147,13 @@ void task_audio_generate() {
 void dac_init() {
     // Configure DAC for lower 8 bits of output signal
     dac_continuous_config_t dac_config = {
-        .chan_mask = DAC_CHANNEL_MASK_ALL,
+        .chan_mask = DAC_CHANNEL_MASK_CH1,
         .desc_num = 16,
         .buf_size = AUDIO_BUF_SIZE * NUM_DAC_CHANNELS,
         .freq_hz = OUTPUT_SAMPLE_RATE,
         .offset = 0,
         .clk_src = DAC_DIGI_CLK_SRC_APLL,
-        .chan_mode = DAC_CHANNEL_MODE_ALTER,
+        .chan_mode = DAC_CHANNEL_MODE_SIMUL,
     };
     ESP_ERROR_CHECK(dac_continuous_new_channels(&dac_config, &dac_handle));
 

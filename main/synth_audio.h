@@ -10,7 +10,7 @@
 
 #define AUDIO_BUF_SIZE        512
 #define OUTPUT_SAMPLE_RATE    44100
-#define NUM_DAC_CHANNELS      2
+#define NUM_DAC_CHANNELS      1
 
 
 void task_audio_generate();
