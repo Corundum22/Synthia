@@ -500,7 +500,12 @@ void update_visualizer_vals(){
 
     mask = 0;
 
+    for(int i = 0; i < NUM_BARS; i++){
+        bar_vals[i] = 0;
+    }
+
     for(int i = 0; i < NUM_VOICES + SEQ_VOICES; i++){
+
         if(note_properties_gui[i].is_sounding){
 
             uint_fast8_t band1 = freq_map[note_properties_gui[i].note_num].bar1;
@@ -512,11 +517,11 @@ void update_visualizer_vals(){
             bar_vals[band2] += freq_map[note_properties_gui[i].note_num].weight2 * note_properties_gui[i].multiplier;
         }
     }
-    for(int i = 0; i < NUM_BARS; i++){
+    /*for(int i = 0; i < NUM_BARS; i++){
         if(!(mask >> i & (uint32_t)0x0001)){ 
             bar_vals[i] = 0;
         }
-    }
+    }*/
 }
 
 void create_visualizer(){
