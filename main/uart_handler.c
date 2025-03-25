@@ -8,7 +8,6 @@
 #include "uart_handler.h"
 #include "synth_audio.h"
 #include "note_handler.h"
-#include "esp_task_wdt.h"
 
 
 enum midi_event {
@@ -41,15 +40,15 @@ void uart_init() {
     };
 
     ESP_ERROR_CHECK(uart_driver_install(UART_NUM_2, MIDI_UART_BUFFER_SIZE * 2, 0, 100, &midi_uart_queue, 0));
-    printf("uart driver installed\n");
+    //printf("uart driver installed\n");
     ESP_ERROR_CHECK(uart_param_config(MIDI_UART_NUM, &midi_uart_conf));
-    printf("uart paramaters configured\n");
+    //printf("uart paramaters configured\n");
     ESP_ERROR_CHECK(uart_set_pin(UART_NUM_2, -1, 16, 19, 18));
                                 // uart num, tx, rx, rts, cts
-    printf("uart pin set\n");
+    //printf("uart pin set\n");
 
     ESP_ERROR_CHECK(uart_enable_rx_intr(UART_NUM_2));
-    printf("uart rx interrupts enabled\n");
+    //printf("uart rx interrupts enabled\n");
 }
 int times_triggered = 0;
 void task_midi_uart(void *pvParameters) {
@@ -58,19 +57,19 @@ void task_midi_uart(void *pvParameters) {
     while (1) {
         if (xQueueReceive(midi_uart_queue, (void *) &event, (TickType_t) portMAX_DELAY)) {
             bzero(dtmp, MIDI_UART_BUFFER_SIZE);
-            printf("times triggered = %d\n", ++times_triggered);
+            //printf("times triggered = %d\n", ++times_triggered);
             
             switch (event.type) {
 
                 case UART_DATA:
                     uart_read_bytes(MIDI_UART_NUM, dtmp, event.size, portMAX_DELAY);
-                    printf("Data received: %s\n", dtmp);
+                    //printf("Data received: %s\n", dtmp);
 
                     for (int i = 0; i < event.size; i++) {
 
                         switch (current_midi_event) {
                             case waiting:
-                                printf("in waiting\n\n");
+                                //printf("in waiting\n\n");
 
                                 switch (dtmp[i] & 0b11110000) {
                                     case (NOTE_ON | STATUS_BIT):
@@ -85,26 +84,26 @@ void task_midi_uart(void *pvParameters) {
                                 break;
 
                             case note_on_key_num:
-                                printf("in on key num\n\n");
+                                //printf("in on key num\n\n");
                                 key_num = dtmp[i];
                                 current_midi_event = note_on_velocity;
                                 break;
 
                             case note_off_key_num:
-                                printf("in off key num\n\n");
+                                //printf("in off key num\n\n");
                                 key_num = dtmp[i];
                                 current_midi_event = note_off_velocity;
                                 break;
 
                             case note_on_velocity:
-                                printf("in on velocity\n\n");
+                                //printf("in on velocity\n\n");
                                 velocity = dtmp[i];
                                 current_midi_event = waiting;
                                 set_keypress(key_num);
                                 break;
                             
                             case note_off_velocity:
-                                printf("in off velocity\n\n");
+                                //printf("in off velocity\n\n");
                                 velocity = dtmp[i];
                                 current_midi_event = waiting;
                                 set_keyrelease(key_num);
@@ -127,27 +126,27 @@ void task_midi_uart(void *pvParameters) {
                     break;
 
                 case UART_BREAK:
-                    printf("MIDI: connection broken!\n");
+                    //printf("MIDI: connection broken!\n");
                     break;
 
                 case UART_PARITY_ERR:
-                    printf("MIDI: parity error!\n");
+                    //printf("MIDI: parity error!\n");
                     break;
 
                 case UART_FRAME_ERR:
-                    printf("MIDI: frame error!\n");
+                    //printf("MIDI: frame error!\n");
                     break;
 
                 default:
                     uart_flush_input(MIDI_UART_NUM);
                     xQueueReset(midi_uart_queue);
-                    printf("MIDI: a useless event occurred\n");
+                    //printf("MIDI: a useless event occurred\n");
                     break;
             }
         }
     }
     free(dtmp);
     dtmp = NULL;
-    printf("MIDI task ended!");
+    //printf("MIDI task ended!");
     vTaskDelete(NULL);
 }

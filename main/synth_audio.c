@@ -30,6 +30,7 @@ uint_fast16_t *current_wave1 = sin_array;
 uint_fast16_t *current_wave2 = sin_array;
 
 
+// Get value for single voice
 static inline uint32_t wave(uint_fast8_t midi_note_number, uint_fast16_t multiply_val, uint_fast32_t time) {
     uint_fast32_t ratio_numerator = ratio_num[midi_note_number];
     uint_fast32_t ratio_denominator = ratio_denom[midi_note_number];
@@ -44,6 +45,7 @@ static inline uint32_t wave(uint_fast8_t midi_note_number, uint_fast16_t multipl
 static inline uint_fast16_t audio_sample_get(uint32_t time) {
     uint32_t data = 0;
 
+    // Combine all enabled voices
     #if NUM_COMB_VOICES >= 1
         GET_NOTE(0)
     #endif
@@ -77,6 +79,7 @@ static inline uint_fast16_t audio_sample_get(uint32_t time) {
 
     data /= (NUM_VOICES + SEQ_VOICES);
     
+    // TODO: remove the right shift after reducing wavetables to 8 bits
     return (uint_fast16_t) (data >> 8);
 }
 

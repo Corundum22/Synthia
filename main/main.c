@@ -62,14 +62,6 @@ static void exec_init() {
     task_create();
     printf("Tasks started\n");
 
-    /*esp_task_wdt_config_t wdt_config = {
-        .timeout_ms = 500,
-        .idle_core_mask = (1 << 1) | (1 << 0),
-        .trigger_panic = true,
-    };
-    esp_task_wdt_init(&wdt_config);*/
-    //esp_task_wdt_add(midi_uart_task_handle);
-
     vTaskDelete(NULL);
 }
 
