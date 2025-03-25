@@ -8,6 +8,7 @@
 #include "uart_handler.h"
 #include "synth_audio.h"
 #include "note_handler.h"
+#include "esp_task_wdt.h"
 
 
 enum midi_event {
@@ -39,7 +40,7 @@ void uart_init() {
         .source_clk = UART_SCLK_APB,
     };
 
-    ESP_ERROR_CHECK(uart_driver_install(UART_NUM_2, MIDI_UART_BUFFER_SIZE * 2, 0, 20, &midi_uart_queue, 0));
+    ESP_ERROR_CHECK(uart_driver_install(UART_NUM_2, MIDI_UART_BUFFER_SIZE * 2, 0, 100, &midi_uart_queue, 0));
     printf("uart driver installed\n");
     ESP_ERROR_CHECK(uart_param_config(MIDI_UART_NUM, &midi_uart_conf));
     printf("uart paramaters configured\n");
@@ -50,13 +51,14 @@ void uart_init() {
     ESP_ERROR_CHECK(uart_enable_rx_intr(UART_NUM_2));
     printf("uart rx interrupts enabled\n");
 }
-
+int times_triggered = 0;
 void task_midi_uart(void *pvParameters) {
     uart_event_t event;
     uint8_t *dtmp = (uint8_t *) malloc(MIDI_UART_BUFFER_SIZE + 1);
     while (1) {
         if (xQueueReceive(midi_uart_queue, (void *) &event, (TickType_t) portMAX_DELAY)) {
             bzero(dtmp, MIDI_UART_BUFFER_SIZE);
+            printf("times triggered = %d\n", ++times_triggered);
             
             switch (event.type) {
 
@@ -109,6 +111,8 @@ void task_midi_uart(void *pvParameters) {
                                 break;
                         }
                     }
+                    uart_flush_input(MIDI_UART_NUM);
+                    xQueueReset(midi_uart_queue);
 
                     break;
 
@@ -135,6 +139,8 @@ void task_midi_uart(void *pvParameters) {
                     break;
 
                 default:
+                    uart_flush_input(MIDI_UART_NUM);
+                    xQueueReset(midi_uart_queue);
                     printf("MIDI: a useless event occurred\n");
                     break;
             }
@@ -142,5 +148,6 @@ void task_midi_uart(void *pvParameters) {
     }
     free(dtmp);
     dtmp = NULL;
+    printf("MIDI task ended!");
     vTaskDelete(NULL);
 }

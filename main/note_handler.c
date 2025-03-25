@@ -31,28 +31,21 @@ note_data note_properties_slow[NUM_VOICES + SEQ_VOICES] = {{
 
 esp_timer_handle_t envelope_timer_handle;
 
-void program_sequencer(uint_fast8_t key_num){
-
-    if(squ_enable_squ == 0) {
-        squ_pattern[current_squ_program_index] = key_num;
-        current_squ_program_index++;
-        if (current_squ_program_index >= squ_length_squ) {
-            current_squ_index = 0;
-        }
-    }
-
-}
 
 
 void set_keypress(uint_fast8_t key_num) {
 
     // Prevent unison keypresses from retriggering a note
-    for (int i = 0; i < NUM_VOICES; i++) {
+    /*for (int i = 0; i < NUM_VOICES; i++) {
         if (note_properties[i].note_num == key_num && note_properties[i].is_pressed == true) {
             return; // return without doing anything if the key is already pressed
                     // i.e. no unison keys
         }
-    }
+    }*/
+
+
+    // Program the sequencer
+    program_sequencer(key_num);
 
     // Trigger the note so long as there is at least one voice not being pressed
     for (int i = 0; i < NUM_VOICES; i++) {
@@ -62,10 +55,6 @@ void set_keypress(uint_fast8_t key_num) {
             note_properties[i].is_sounding = true;
             note_properties[i].envelope_state = attack;
             note_properties[i].note_num = key_num;
-
-
-            // Program the sequencer
-            program_sequencer(key_num);
 
 
             return;
@@ -85,12 +74,12 @@ void set_keyrelease(uint_fast8_t key_num) {
 
 
 void set_squ_keypress(uint_fast8_t key_num) {
-    for (int i = NUM_VOICES; i < NUM_VOICES + SEQ_VOICES; i++) {
+    /*for (int i = NUM_VOICES; i < NUM_VOICES + SEQ_VOICES; i++) {
         if (note_properties[i].note_num == key_num && note_properties[i].is_sounding == true) {
             return; // return without doing anything if the key is already pressed
                     // i.e. no unison keys
         }
-    }
+    }*/
     for (int i = NUM_VOICES; i < NUM_VOICES + SEQ_VOICES; i++) {
         if (note_properties[i].is_pressed == false) {
 

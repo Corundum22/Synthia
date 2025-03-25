@@ -242,6 +242,7 @@ lv_obj_t* roller = NULL;
 
 
 void update_ui_cb(lv_timer_t* timer) {
+
     
     if(menu_select_gui != menu_select_gui_prev){menu_not_stable = true;}
 
@@ -318,7 +319,7 @@ void update_ui_cb(lv_timer_t* timer) {
                     //Update playback pattern
                     if(squ_enable_old != squ_enable_gui){
                         for(int i = 0; i < 64; i++){
-                            update_midi_note_name(squ_pattern[i]);
+                            update_midi_note_name(squ_pattern_gui[i]);
                             lv_label_set_text(array[i][1], midi_note_name);
                             lv_obj_set_style_border_color(array[i][0], (i+i/8)%2 ? BLACK_SQUARE_BORDER : WHITE_SQUARE_BORDER, LV_PART_MAIN | LV_STATE_DEFAULT);
                         }
@@ -333,14 +334,14 @@ void update_ui_cb(lv_timer_t* timer) {
                     
                     if(squ_enable_old != squ_enable_gui){
                         for(int i = 0; i < 64; i++){
-                            update_midi_note_name(squ_pattern[i]);
+                            update_midi_note_name(squ_pattern_gui[i]);
                             lv_label_set_text(array[i][1], midi_note_name);
                             lv_obj_set_style_border_color(array[i][0], (i+i/8)%2 ? BLACK_SQUARE_BORDER : WHITE_SQUARE_BORDER, LV_PART_MAIN | LV_STATE_DEFAULT);
                         }
                     }
 
                     lv_obj_set_style_border_color(array[squ_index_gui][0], (squ_index_gui+squ_index_gui/8)%2 ? BLACK_SQUARE_BORDER : WHITE_SQUARE_BORDER, LV_PART_MAIN | LV_STATE_DEFAULT);
-                    update_midi_note_name(squ_pattern[squ_index_gui]);
+                    update_midi_note_name(squ_pattern_gui[squ_index_gui]);
 
                     if(squ_index_gui == 0){
                         for(int i = 0; i < 64; i++){

@@ -1,6 +1,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 #include "freertos/FreeRTOS.h"
+#include "freertos/projdefs.h"
 #include "freertos/task.h"
 #include "freertos/semphr.h"
 #include "note_handler.h"
@@ -9,6 +10,7 @@
 #include "freertos/task.h"
 #include "global_header.h"
 #include "sequencer.h"
+#include "esp_task_wdt.h"
 
 SemaphoreHandle_t guiSemaphore; // protects the copied data to be used by the gui
 SemaphoreHandle_t ySplitterSemaphore; // protects the original data sources
@@ -56,6 +58,7 @@ int_fast16_t squ_length_gui = 0;
 int_fast16_t squ_tempo_gui = 1;
 int_fast16_t squ_duration_gui = 1;
 int_fast16_t squ_index_gui = 0;
+int_fast16_t squ_program_index_gui = 0;
 uint_fast8_t squ_pattern_gui[SEQ_LEN];
 
 // GUI note data
@@ -112,7 +115,8 @@ static void copy_gui() {
     note_data_deep_copy();
     squ_pattern_deep_copy();
 
-    squ_index_gui = current_squ_index;
+    squ_program_index_gui = squ_program_index;
+    squ_index_gui = squ_index;
 
     xSemaphoreGive(guiSemaphore);
 }

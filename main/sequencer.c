@@ -88,8 +88,8 @@ uint_fast8_t test_pattern_HOTTOGO[SEQ_LEN] = {
 
 esp_timer_handle_t sequencer_timer_handle;
 
-int_fast8_t current_squ_index = 0;
-int_fast8_t current_squ_program_index = 0;
+int_fast8_t squ_index = 0;
+int_fast8_t squ_program_index = 0;
 
 bool next_is_on_squ_press = true;
 
@@ -98,18 +98,31 @@ void sequencer_timer_callback() {
     if (squ_enable_squ) {
         if (next_is_on_squ_press) {
 
-            set_squ_keypress(squ_pattern[current_squ_index]);
+            set_squ_keypress(squ_pattern[squ_index]);
 
         } else {
 
-            set_squ_keyrelease(squ_pattern[current_squ_index]);
+            set_squ_keyrelease(squ_pattern[squ_index]);
 
-            current_squ_index++;
-            if (current_squ_index >= squ_length_squ) current_squ_index = 0;
+            squ_index++;
+            if (squ_index >= squ_length_squ) squ_index = 0;
 
         }
 
     }
+}
+
+void program_sequencer(uint_fast8_t key_num){
+    if(squ_enable_squ == 0) {
+        squ_pattern[squ_program_index] = key_num;
+
+        squ_program_index++;
+
+        if (squ_program_index >= squ_length_squ) {
+            squ_program_index = 0;
+        }
+    }
+
 }
 
 inline static int_fast16_t get_squ_duration_sided() {
@@ -125,7 +138,7 @@ void update_squ_timer(int_fast16_t new_val) {
 
 void pause_squ_timer() {
     ESP_ERROR_CHECK(esp_timer_stop(sequencer_timer_handle));
-    set_squ_keyrelease(squ_pattern[(current_squ_index + SEQ_LEN - 1) % SEQ_LEN]);
+    set_squ_keyrelease(squ_pattern[(squ_index + SEQ_LEN - 1) % SEQ_LEN]);
 }
 
 void resume_squ_timer(int_fast16_t us_val) {

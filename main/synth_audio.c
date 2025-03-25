@@ -132,6 +132,8 @@ void task_audio_generate() {
             
             data_array[i] = (uint8_t) data;
             data_array[i + 1] = (uint8_t) (data >> 8);
+            //data_array[i + 1] = (uint8_t) data;
+            //data_array[i] = (uint8_t) (data >> 8);
         
             time++;
         }

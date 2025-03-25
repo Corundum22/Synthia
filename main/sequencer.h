@@ -15,11 +15,12 @@
 
 extern int_fast8_t squ_pattern[SEQ_LEN];
 
-extern int_fast8_t current_squ_index;
-extern int_fast8_t current_squ_program_index;
+extern int_fast8_t squ_index;
+extern int_fast8_t squ_program_index;
 
 
 void sequencer_timer_callback();
+void program_sequencer(uint_fast8_t key_num);
 void update_squ_timer(int_fast16_t new_val);
 void sequencer_timer_init();
 void pause_squ_timer();
