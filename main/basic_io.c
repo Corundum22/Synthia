@@ -28,6 +28,8 @@ const static char *TAG = "BASIC IO";
 menu_state menu_select = madsr;
 int_fast16_t low_pass_val = DEFAULT_LOW_PASS_VAL;
 
+int_fast16_t low_pass_last_val = DEFAULT_LOW_PASS_VAL;
+
 // ADSR menu values
 int_fast16_t attack_val = DEFAULT_ENVELOPE_VALS;
 int_fast16_t decay_val = DEFAULT_ENVELOPE_VALS;
@@ -86,16 +88,18 @@ static rotary_state low_pass_last_rotary = rwait;
 static rotary_state select_last_rotary = rwait;
 
 // Extra speed trackers
-int extra_speed_1, extra_speed_2, extra_speed_3, extra_speed_4, extra_speed_select, extra_speed_low_pass = 1;
+int extra_speed_1, extra_speed_2, extra_speed_3, extra_speed_4, extra_speed_select = 1;
 
 // Encoder delta trackers
-int pot_1_delta, pot_2_delta, pot_3_delta, pot_4_delta, pot_low_pass_delta, pot_select_delta = 0;
+int pot_1_delta, pot_2_delta, pot_3_delta, pot_4_delta, pot_select_delta = 0;
+int pot_low_pass_mv = 0;
 
 // Encoder fast_delta trackers
 // Note that the select_delta is intentionally absent
-int pot_1_fast_delta, pot_2_fast_delta, pot_3_fast_delta, pot_4_fast_delta, pot_low_pass_fast_delta;
+int pot_1_fast_delta, pot_2_fast_delta, pot_3_fast_delta, pot_4_fast_delta;
 
 static int32_t rotary_encoder_interpret(uint_fast32_t mv_voltage, rotary_state* state);
+static int32_t pot_low_pass_interpret(uint_fast32_t mv_voltage);
 static bool adc_calibration_init(adc_unit_t unit, adc_channel_t channel, adc_atten_t atten, adc_cali_handle_t *out_handle);
 
 void apply_low_pass(uint8_t val_to_apply);
@@ -129,13 +133,15 @@ static inline void update_fast_deltas() {
     pot_2_fast_delta = pot_2_delta * extra_speed_2;
     pot_3_fast_delta = pot_3_delta * extra_speed_3;
     pot_4_fast_delta = pot_4_delta * extra_speed_4;
-    pot_low_pass_fast_delta = pot_low_pass_delta * extra_speed_low_pass;
 }
 
 static inline void apply_deltas() {
 
-    if (pot_low_pass_fast_delta) {
-        low_pass_val = saturation_add(low_pass_val, pot_low_pass_fast_delta, 0, LEDC_DUTY_MAX_VAL);
+    bool pot_low_pass_changed = low_pass_last_val != low_pass_val;
+
+    if (pot_low_pass_changed) {
+        low_pass_last_val = low_pass_val;
+        low_pass_val = pot_low_pass_interpret(pot_low_pass_mv);
         apply_low_pass((uint8_t) low_pass_val);
     }
     menu_select = wrap_add(menu_select, pot_select_delta, 0, MAX_MENU_STATE_VAL);
@@ -180,7 +186,7 @@ static inline void apply_deltas() {
             break;
     }
 
-    if (pot_1_delta | pot_2_delta | pot_3_delta | pot_4_delta | pot_low_pass_delta | pot_select_delta) {
+    if (pot_1_delta | pot_2_delta | pot_3_delta | pot_4_delta | pot_low_pass_changed | pot_select_delta) {
         //printf("\033[2JAttack: %03d  Decay: %03d  Sustain: %03d  Release: %03d\nLow pass: %03d  Current menu: %03d\nWave type: %03d\nSequencer enable: %03d  Sequencer clear: %03d\nNote 1: %03d  Note 2: %03d  Note 3: %03d  Note 4: %03d\nNote 5: %03d  Note 6: %03d  Note 7: %03d  Note 8: %03d\n", attack_val, decay_val, sustain_val, release_val, low_pass_val, menu_select, wave_select_val, sequencer_enable_val, sequencer_clear_val, squ_note_1_val, squ_note_2_val, squ_note_3_val, squ_note_4_val, squ_note_5_val, squ_note_6_val, squ_note_7_val, squ_note_8_val);
         // Allow task_data_split() to execute
         xSemaphoreGive(ySplitterSemaphore);
@@ -211,12 +217,6 @@ static inline void update_extra_delta_speed() {
         extra_speed_4 += EXTRA_SPEED_INCREASE;
     } else if (extra_speed_4 > EXTRA_SPEED_MINIMUM) {
         extra_speed_4 -= EXTRA_SPEED_DECREASE;
-    }
-
-    if (pot_low_pass_delta != 0) {
-        extra_speed_low_pass += EXTRA_SPEED_INCREASE;
-    } else if (extra_speed_low_pass > EXTRA_SPEED_MINIMUM) {
-        extra_speed_low_pass -= EXTRA_SPEED_DECREASE;
     }
 
 }
@@ -260,7 +260,7 @@ void task_adc() {
         // low pass pot
         ESP_ERROR_CHECK(adc_oneshot_read(menu_adc_handle, LOW_PASS_POT, &adc_result));
         ESP_ERROR_CHECK(adc_cali_raw_to_voltage(menu_low_pass_cali_handle, adc_result, &adc_result));
-        pot_low_pass_delta = rotary_encoder_interpret(adc_result, &low_pass_last_rotary);
+        pot_low_pass_mv = rotary_encoder_interpret(adc_result, &low_pass_last_rotary);
 
         // high pass pot
         ESP_ERROR_CHECK(adc_oneshot_read(menu_adc_handle, SELECT_POT, &adc_result));
@@ -317,6 +317,10 @@ void gpio_interrupt_handler(void *args) {
 
 }
 
+// Interpret low pass potentiometer value
+static int32_t pot_low_pass_interpret(uint_fast32_t mv_voltage) {
+    return (255 * mv_voltage) / MAX_VOLTAGE_READ;
+}
 
 // Interpret rotary encoder value changes with tracked last state of target rotary encoder
 static int32_t rotary_encoder_interpret(uint_fast32_t mv_voltage, rotary_state* state) {

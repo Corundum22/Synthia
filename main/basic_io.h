@@ -66,6 +66,8 @@
 #define ROTARY_MIDLOW_TARGET     1089
 #define ROTARY_LOW_MAX           700
 
+#define MAX_VOLTAGE_READ         3300
+
 #define MAX_MENU_STATE_VAL 4
 
 
