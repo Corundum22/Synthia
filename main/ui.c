@@ -3,16 +3,15 @@
 #include "basic_io.h"
 #include "data_y_splitter.h"
 #include "ui.h"
-#include <math.h> //TODO
 
 #define WHITE_SQUARE_BORDER lv_color_hex(0xB0B0B0)
 #define BLACK_SQUARE_BORDER lv_color_hex(0x606060)
 
 
 /*
-TODO:   fix menu actions
-
-ASK:    what the seq's interface is gonna look like f
+TODO:
+    add low pass bar
+    update top left
 */
 
 const int SCREEN_WIDTH = 320;
@@ -28,7 +27,7 @@ uint_fast8_t menu_stable = 1;
 
 const int BORDER_WIDTH = 5;
 const int PADDING_WIDTH = 0;
-const int LEFT_PANEL_WIDTH = 100;
+const int LEFT_PANEL_WIDTH = 120;
 const int VIZ_HEIGHT = 360;
 const int MENU_HEIGHT = 120;
 const int RIGHT_PANEL_WIDTH = SCREEN_WIDTH - LEFT_PANEL_WIDTH;
@@ -36,7 +35,7 @@ const int BUTTON_HEIGHT = SCREEN_HEIGHT - VIZ_HEIGHT;
 const int MENU_BAR_HEIGHT = 30;
 const int MENU_BAR_WIDTH = RIGHT_PANEL_WIDTH - 100;
 const int LOW_PASS_BAR_HEIGHT = VIZ_HEIGHT - 100;
-const int LOW_PASS_BAR_WIDTH = 30;
+const int LOW_PASS_BAR_WIDTH = 10;
 const int MENU_INNER_PADDING = 15;
 
 lv_obj_t* menu[4];
@@ -57,7 +56,7 @@ char* ssquare_gui = "Square";
 
 //SQU
 
-const int PROGRESS_BAR_HEIGHT = 10;
+const int PROGRESS_BAR_HEIGHT = 25;
 const int PROGRESS_BOX_HEIGHT = PROGRESS_BAR_HEIGHT + 60;
 const int PROGRESS_BAR_WIDTH = 200;
 const int KEY_WIDTH = 40;
@@ -79,7 +78,7 @@ uint_fast8_t squ_enable_old = -1;
 //VIZ
 #define NUM_BARS 20
 const int VIZ_PADDING = 2;
-const int BAR_HEIGHT = (VIZ_HEIGHT - NUM_BARS*9) / NUM_BARS;
+const int BAR_HEIGHT = 1+ (VIZ_HEIGHT - NUM_BARS*9) / NUM_BARS;
 
 const uint_fast16_t freq_notes[] = { 8, 8, 9, 9, 10, 10, 11, 12, 12, 13, 
     14, 15, 16, 17, 18, 19, 20, 21, 23, 24, 25, 27, 29, 30, //24
@@ -231,6 +230,8 @@ lv_obj_t* viz_panel       = NULL;
 lv_obj_t* bars[NUM_BARS];
 uint16_t bar_vals[NUM_BARS];
 
+lv_obj_t* low_pass_bar;
+
 uint32_t mask = 0;
 
 //ROLLER
@@ -239,6 +240,8 @@ bool menu_not_stable = false;
 
 uint_fast16_t stable_counter = 0;
 lv_obj_t* roller = NULL;
+
+lv_style_t* roller_style;
 
 
 void update_ui_cb(lv_timer_t* timer) {
@@ -257,10 +260,11 @@ void update_ui_cb(lv_timer_t* timer) {
             stable_counter = 0;
             lv_obj_add_flag(roller, LV_OBJ_FLAG_HIDDEN);
             if(menu_select_gui == madsr || menu_select_gui == mwave){
-                lv_obj_set_parent(roller, scr0);
+                lv_obj_set_parent(roller, button_panel);
             }
             if(menu_select_gui == msequencer_setup){
                 lv_obj_set_parent(roller, scr1);
+                lv_obj_set_pos(scr1, 5, 5);
             }
         }
     }
@@ -283,7 +287,7 @@ void update_ui_cb(lv_timer_t* timer) {
                 update_visualizer_vals();
 
                 for(int i = 0; i < NUM_BARS; i++){
-                    lv_bar_set_value(bars[i], bar_vals[i], LV_ANIM_OFF);
+                    lv_bar_set_value(bars[i], bar_vals[i], LV_ANIM_ON);
                 }
                 
 
@@ -304,7 +308,7 @@ void update_ui_cb(lv_timer_t* timer) {
                 update_visualizer_vals();       
 
                 for(int i = 0; i < NUM_BARS; i++){
-                    lv_bar_set_value(bars[i], bar_vals[i], LV_ANIM_OFF);
+                    lv_bar_set_value(bars[i], bar_vals[i], LV_ANIM_ON);
                 }
                 
                 update_top_left();
@@ -444,6 +448,7 @@ void create_squ(){
     lv_obj_set_pos(progress_panel, BORDER_WIDTH, BORDER_WIDTH);
     lv_bar_set_value(progress_bar, 0, LV_ANIM_OFF);
     lv_bar_set_range(progress_bar, 0, 64);
+    bar_style(progress_bar, &bar_bg_style, &bar_ind_style);
 
     // Tempo - Length - Duration - Enable
     tempo_text = lv_label_create(top_panel);
@@ -451,10 +456,10 @@ void create_squ(){
     duration_text = lv_label_create(top_panel);
     enable_text = lv_label_create(top_panel);
 
-    lv_obj_set_pos(tempo_text, 20, 90);
-    lv_obj_set_pos(length_text, 20, 120);
-    lv_obj_set_pos(duration_text, 140, 90);
-    lv_obj_set_pos(enable_text, 140, 120);
+    lv_obj_set_pos(tempo_text, 20, 98); //determined experimentally
+    lv_obj_set_pos(length_text, 20, 125);
+    lv_obj_set_pos(duration_text, 140, 98);
+    lv_obj_set_pos(enable_text, 140, 125);
     generic_txt_format(tempo_text, lv_color_white());
     generic_txt_format(length_text, lv_color_white());
     generic_txt_format(duration_text, lv_color_white());
@@ -492,9 +497,14 @@ void update_top_left(){
 }
 
 void create_roller(){
-    roller = lv_roller_create(scr0);
+    roller = lv_roller_create(button_panel);
     lv_roller_set_options(roller, "ADSR\nWave\nSequencer", LV_ANIM_ON);
+    lv_obj_set_size(roller, 110, 110);
+    lv_obj_set_pos(roller, 0, 0);
     lv_obj_add_flag(roller, LV_OBJ_FLAG_HIDDEN);
+    lv_obj_set_scrollbar_mode(button_panel, LV_SCROLLBAR_MODE_OFF);
+
+    // TODO lv_style_init()
 }
 
 void update_visualizer_vals(){
@@ -518,29 +528,51 @@ void update_visualizer_vals(){
             bar_vals[band2] += freq_map[note_properties_gui[i].note_num].weight2 * note_properties_gui[i].multiplier;
         }
     }
-    /*for(int i = 0; i < NUM_BARS; i++){
-        if(!(mask >> i & (uint32_t)0x0001)){ 
-            bar_vals[i] = 0;
-        }
-    }*/
 }
 
 void create_visualizer(){
-
     viz_panel = lv_obj_create(scr0);
     lv_obj_set_size(viz_panel, LEFT_PANEL_WIDTH, VIZ_HEIGHT);
     lv_obj_set_pos(viz_panel, 0, BUTTON_HEIGHT);
-
     generic_obj_format(viz_panel, lv_color_black());
-    flex_column(viz_panel);
+    lv_obj_set_scrollbar_mode(viz_panel, LV_SCROLLBAR_MODE_OFF);
+
+    lv_obj_t * row_container = lv_obj_create(viz_panel);
+    lv_obj_set_size(row_container, LEFT_PANEL_WIDTH, VIZ_HEIGHT);
+    lv_obj_set_flex_flow(row_container, LV_FLEX_FLOW_ROW);
+    lv_obj_set_flex_align(row_container, LV_FLEX_ALIGN_START, LV_FLEX_ALIGN_START, LV_FLEX_ALIGN_START);
+    lv_obj_remove_style_all(row_container);
+
+    static lv_style_t bar_style;
+    lv_style_init(&bar_style);
+    lv_style_set_bg_color(&bar_style, lv_color_hex(0x822E28));
+    lv_style_set_border_width(&bar_style, 0);
+
+    static lv_style_t bg_style;
+    lv_style_init(&bg_style);
+    lv_style_set_bg_color(&bg_style, lv_color_hex(0xC9473E));
+    lv_style_set_border_width(&bg_style, 0);
+
+
+    const int BAR_OFFSET = 6;
 
     for(int i = 0; i < NUM_BARS; i++){
         bars[i] = lv_bar_create(viz_panel);
-        lv_obj_set_size(bars[i], LEFT_PANEL_WIDTH - BORDER_WIDTH*2 - VIZ_PADDING*2, BAR_HEIGHT);
-        lv_obj_set_pos(bars[i], 0, VIZ_HEIGHT + BAR_HEIGHT*i);
+        lv_obj_set_size(bars[i], LEFT_PANEL_WIDTH - BORDER_WIDTH*2 - VIZ_PADDING*2 - LOW_PASS_BAR_WIDTH*2 - BAR_OFFSET, BAR_HEIGHT);
+        lv_obj_set_pos(bars[i], BAR_OFFSET, (BAR_HEIGHT+7) * i + 8);
         lv_bar_set_range(bars[i], 0, 65535);
+        lv_obj_add_style(bars[i], &bar_style, LV_PART_INDICATOR);
+        lv_obj_add_style(bars[i], &bg_style, LV_PART_MAIN);
     }
+
+    low_pass_bar = lv_bar_create(viz_panel);
+    lv_obj_set_size(low_pass_bar, LOW_PASS_BAR_WIDTH, VIZ_HEIGHT-25);
+    lv_obj_set_pos(low_pass_bar, LEFT_PANEL_WIDTH - LOW_PASS_BAR_WIDTH*2 - BAR_OFFSET-2, 7);
+    lv_bar_set_range(low_pass_bar, 0, 255);
+        lv_obj_add_style(low_pass_bar, &bg_style, LV_PART_MAIN);
+        lv_obj_add_style(low_pass_bar, &bar_style, LV_PART_INDICATOR);
 }
+
 
 void generic_obj_format(lv_obj_t* o, lv_color_t c){
     lv_obj_set_style_bg_color(o, c, LV_PART_MAIN | LV_STATE_DEFAULT);
