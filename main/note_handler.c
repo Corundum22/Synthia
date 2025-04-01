@@ -45,7 +45,10 @@ void set_keypress(uint_fast8_t key_num) {
 
 
     // Program the sequencer
-    program_sequencer(key_num);
+    if(menu_select == msequencer_setup){
+        program_sequencer(key_num);
+    }
+    
 
     // Trigger the note so long as there is at least one voice not being pressed
     for (int i = 0; i < NUM_VOICES; i++) {
