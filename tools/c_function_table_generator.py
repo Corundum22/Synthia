@@ -2,13 +2,13 @@ from math import *
 from fractions import Fraction
 
 MAX_LINE_LEN = 60
-NUM_VALUES = 128
-STARTING_LINE = "uint32_t orwell12_denom[] = { "
+NUM_VALUES = 256
+STARTING_LINE = "uint_fast8_t triangle_array[] = { "
 LEFT_SPACES = 4
 
 
 def func_to_apply(x):
-    return tuning_numerator(x)
+    return triangle(x)
 
 orwell12_cents = [0.0, 157.14286, 271.42857, 385.71429, 428.57143,
              542.85714, 657.14286, 700.00000, 814.28571, 928.57143, 
@@ -41,25 +41,25 @@ def tuning_numerator(x):
 
 def triangle(x):
     if (x < 64):
-        return 2**15 + (x * 2**8)
+        return 0x7f + (x * 2)
     elif (x < 64 * 3):
         x_new = x - 64;
-        return 0xffff - (x_new * 2**9)
+        return 0xff - (x_new * 2)
     else:
         x_new = x - (64 * 3)
-        return x_new * 2**9
+        return x_new * 2
 
 def square(x):
     if (x < 128):
-        return 0xffff
+        return 0xff
     else:
-        return 0x0000
+        return 0x00
 
 def sawtooth(x):
-    return int(x * 2**8)
+    return int(x)
 
-def sin(x):
-    return int((2**16 / 2) * (1 + sin(2 * pi * x / NUM_VALUES)))
+def sinwave(x):
+    return int(2**7 * (1 + sin(2 * pi * x / NUM_VALUES)))
 
 #def func_to_apply(x):
 #    if (x < 128):
