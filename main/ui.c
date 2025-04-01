@@ -7,13 +7,6 @@
 #define WHITE_SQUARE_BORDER lv_color_hex(0xB0B0B0)
 #define BLACK_SQUARE_BORDER lv_color_hex(0x606060)
 
-
-/*
-TODO:
-    add low pass bar
-    update top left
-*/
-
 const int SCREEN_WIDTH = 320;
 const int SCREEN_HEIGHT = 480;
 lv_obj_t* curr_scr = NULL;
@@ -42,7 +35,7 @@ lv_obj_t* menu[4];
 lv_obj_t* menu_text[4];
 lv_obj_t* menu_bar[4];
 lv_obj_t* button_panel;
-lv_obj_t* button_text;
+lv_obj_t* button_text[4];
 
 static lv_style_t bar_bg_style;
 static lv_style_t bar_ind_style;
@@ -292,6 +285,8 @@ void update_ui_cb(lv_timer_t* timer) {
                 
 
                 update_top_left();
+
+                lv_bar_set_value(low_pass_bar, low_pass_gui, LV_ANIM_ON);
                 break;
 
             case mwave:
@@ -312,6 +307,8 @@ void update_ui_cb(lv_timer_t* timer) {
                 }
                 
                 update_top_left();
+
+                lv_bar_set_value(low_pass_bar, low_pass_gui, LV_ANIM_ON);
                 break;
 
             case msequencer_setup:
@@ -386,8 +383,14 @@ void create_menu() {
     lv_obj_set_pos(scr0, 0, 0);
     generic_obj_format(button_panel, lv_color_white());
 
-    button_text = lv_label_create(button_panel);
-    generic_txt_format(button_text, lv_color_black());
+    lv_obj_set_flex_flow(button_panel, LV_FLEX_FLOW_COLUMN);
+    lv_obj_set_flex_align(button_panel, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
+
+
+    for(int i = 0; i < 4; i++){
+        button_text[i] = lv_label_create(button_panel);
+        generic_txt_format(button_text[i], lv_color_black());
+    }
 
 
     // Create menu panels
@@ -485,15 +488,20 @@ void create_squ(){
 }
 
 void update_top_left(){
-    int num = 127;
+    int count = 0;
+    int num = 128;
     for(uint_fast8_t i = 0; i < NUM_VOICES + SEQ_VOICES; i++){
         if(note_properties_gui[i].is_sounding){
             num = note_properties_gui[i].note_num;
-            break;
+            update_midi_note_name(num);
+            lv_label_set_text_fmt(button_text[count], "%s", midi_note_name);
+            count++;
         }
     }
-    update_midi_note_name(num);
-    lv_label_set_text_fmt(button_text, "%s", midi_note_name);
+    while(count < 4){
+        lv_label_set_text_fmt(button_text[count], " ");
+        count++;
+    }
 }
 
 void create_roller(){
@@ -568,11 +576,10 @@ void create_visualizer(){
     low_pass_bar = lv_bar_create(viz_panel);
     lv_obj_set_size(low_pass_bar, LOW_PASS_BAR_WIDTH, VIZ_HEIGHT-25);
     lv_obj_set_pos(low_pass_bar, LEFT_PANEL_WIDTH - LOW_PASS_BAR_WIDTH*2 - BAR_OFFSET-2, 7);
-    lv_bar_set_range(low_pass_bar, 0, 255);
-        lv_obj_add_style(low_pass_bar, &bg_style, LV_PART_MAIN);
-        lv_obj_add_style(low_pass_bar, &bar_style, LV_PART_INDICATOR);
+    lv_bar_set_range(low_pass_bar, 77, 86);
+    lv_obj_add_style(low_pass_bar, &bg_style, LV_PART_MAIN);
+    lv_obj_add_style(low_pass_bar, &bar_style, LV_PART_INDICATOR);
 }
-
 
 void generic_obj_format(lv_obj_t* o, lv_color_t c){
     lv_obj_set_style_bg_color(o, c, LV_PART_MAIN | LV_STATE_DEFAULT);
