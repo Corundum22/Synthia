@@ -234,12 +234,9 @@ bool menu_not_stable = false;
 uint_fast16_t stable_counter = 0;
 lv_obj_t* roller = NULL;
 
-lv_style_t* roller_style;
-
 
 void update_ui_cb(lv_timer_t* timer) {
 
-    
     if(menu_select_gui != menu_select_gui_prev){menu_not_stable = true;}
 
     if(menu_not_stable){
@@ -253,11 +250,12 @@ void update_ui_cb(lv_timer_t* timer) {
             stable_counter = 0;
             lv_obj_add_flag(roller, LV_OBJ_FLAG_HIDDEN);
             if(menu_select_gui == madsr || menu_select_gui == mwave){
-                lv_obj_set_parent(roller, button_panel);
+                lv_obj_set_parent(roller, scr0);
+                lv_obj_set_pos(roller, 5, 5);
             }
             if(menu_select_gui == msequencer_setup){
                 lv_obj_set_parent(roller, scr1);
-                lv_obj_set_pos(scr1, 5, 5);
+                lv_obj_set_pos(roller, 5, 5);
             }
         }
     }
@@ -505,14 +503,17 @@ void update_top_left(){
 }
 
 void create_roller(){
-    roller = lv_roller_create(button_panel);
+    roller = lv_roller_create(scr0);
     lv_roller_set_options(roller, "ADSR\nWave\nSequencer", LV_ANIM_ON);
     lv_obj_set_size(roller, 110, 110);
-    lv_obj_set_pos(roller, 0, 0);
+    lv_obj_set_pos(roller, 5, 5);
     lv_obj_add_flag(roller, LV_OBJ_FLAG_HIDDEN);
-    lv_obj_set_scrollbar_mode(button_panel, LV_SCROLLBAR_MODE_OFF);
 
-    // TODO lv_style_init()
+    static lv_style_t roller_style;
+
+    lv_style_init(&roller_style);
+    lv_style_set_bg_color(&roller_style, lv_color_hex(0x822E28));
+    lv_obj_add_style(roller, &roller_style, LV_PART_SELECTED);
 }
 
 void update_visualizer_vals(){
