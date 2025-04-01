@@ -554,12 +554,12 @@ void create_visualizer(){
 
     static lv_style_t bar_style;
     lv_style_init(&bar_style);
-    lv_style_set_bg_color(&bar_style, lv_color_hex(0x822E28));
+    lv_style_set_bg_color(&bar_style, lv_color_hex(0xEB5348));
     lv_style_set_border_width(&bar_style, 0);
 
     static lv_style_t bg_style;
     lv_style_init(&bg_style);
-    lv_style_set_bg_color(&bg_style, lv_color_hex(0xC9473E));
+    lv_style_set_bg_color(&bg_style, lv_color_hex(0x822E28)); //darker 0xC9473E //brightest FF5A4E
     lv_style_set_border_width(&bg_style, 0);
 
 
