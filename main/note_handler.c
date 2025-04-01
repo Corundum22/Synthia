@@ -58,6 +58,7 @@ void set_keypress(uint_fast8_t key_num) {
             note_properties[i].is_sounding = true;
             note_properties[i].envelope_state = attack;
             note_properties[i].note_num = key_num;
+            note_properties[i].multiplier = MIN_ENVELOPE_VAL;
 
 
             return;
@@ -70,7 +71,7 @@ void set_keyrelease(uint_fast8_t key_num) {
         if (note_properties[i].note_num == key_num && note_properties[i].is_pressed == true) {
             note_properties[i].is_pressed = false;
             note_properties[i].envelope_state = release;
-            note_properties[i].multiplier = MIN_ENVELOPE_VAL;
+            //note_properties[i].multiplier = MIN_ENVELOPE_VAL;
         }
     }
 }
