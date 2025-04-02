@@ -36,12 +36,12 @@ esp_timer_handle_t envelope_timer_handle;
 void set_keypress(uint_fast8_t key_num) {
 
     // Prevent unison keypresses from retriggering a note
-    /*for (int i = 0; i < NUM_VOICES; i++) {
+    for (int i = 0; i < NUM_VOICES; i++) {
         if (note_properties[i].note_num == key_num && note_properties[i].is_pressed == true) {
             return; // return without doing anything if the key is already pressed
                     // i.e. no unison keys
         }
-    }*/
+    }
 
 
     // Program the sequencer
@@ -78,12 +78,12 @@ void set_keyrelease(uint_fast8_t key_num) {
 
 
 void set_squ_keypress(uint_fast8_t key_num) {
-    /*for (int i = NUM_VOICES; i < NUM_VOICES + SEQ_VOICES; i++) {
+    for (int i = NUM_VOICES; i < NUM_VOICES + SEQ_VOICES; i++) {
         if (note_properties[i].note_num == key_num && note_properties[i].is_sounding == true) {
             return; // return without doing anything if the key is already pressed
                     // i.e. no unison keys
         }
-    }*/
+    }
     for (int i = NUM_VOICES; i < NUM_VOICES + SEQ_VOICES; i++) {
         if (note_properties[i].is_pressed == false) {
 

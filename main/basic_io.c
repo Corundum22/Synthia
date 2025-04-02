@@ -84,7 +84,6 @@ static rotary_state pot_1_last_rotary = rwait;
 static rotary_state pot_2_last_rotary = rwait;
 static rotary_state pot_3_last_rotary = rwait;
 static rotary_state pot_4_last_rotary = rwait;
-static rotary_state low_pass_last_rotary = rwait;
 static rotary_state select_last_rotary = rwait;
 
 // Extra speed trackers
@@ -99,8 +98,17 @@ int pot_low_pass_last_mv, pot_low_pass_llast_mv, pot_low_pass_lllast_mv = 0;
 // Note that the select_delta is intentionally absent
 int pot_1_fast_delta, pot_2_fast_delta, pot_3_fast_delta, pot_4_fast_delta;
 
+enum button_states_t {
+    bhard,
+    bsoft,
+    bnothing,
+} typedef button_states;
+
+button_states button_current = bnothing;
+
+
 static int32_t rotary_encoder_interpret(uint_fast32_t mv_voltage, rotary_state* state);
-static int32_t pot_low_pass_interpret(uint_fast32_t mv_voltage);
+static int32_t pot_low_pass_interpret();
 static bool adc_calibration_init(adc_unit_t unit, adc_channel_t channel, adc_atten_t atten, adc_cali_handle_t *out_handle);
 
 void apply_low_pass(uint8_t val_to_apply);
@@ -138,12 +146,12 @@ static inline void update_fast_deltas() {
 
 static inline void apply_deltas() {
 
-    //bool pot_low_pass_changed = low_pass_last_val != low_pass_val;
-    bool pot_low_pass_changed = low_pass_last_val != pot_low_pass_interpret(pot_low_pass_mv);
+    int32_t temp_low_pass = pot_low_pass_interpret();
+    bool pot_low_pass_changed = low_pass_last_val != temp_low_pass;
 
     if (pot_low_pass_changed) {
         low_pass_last_val = low_pass_val;
-        low_pass_val = pot_low_pass_interpret(pot_low_pass_mv);
+        low_pass_val = temp_low_pass; 
         apply_low_pass((uint8_t) low_pass_val);
     }
     menu_select = wrap_add(menu_select, pot_select_delta, 0, MAX_MENU_STATE_VAL);
@@ -161,7 +169,7 @@ static inline void apply_deltas() {
             wave_blend_val = saturation_add(wave_blend_val, pot_2_fast_delta, BLEND_VAL_MIN, BLEND_VAL_MAX);
             wave_select2_val = saturation_add((int) wave_select2_val, pot_3_fast_delta, 0, MAX_WAVE_NUMBER);
             if (pot_4_fast_delta) {
-                high_pass_val = saturation_add(high_pass_val, pot_4_fast_delta, 0, LEDC_DUTY_MAX_VAL);
+                high_pass_val = saturation_add(high_pass_val, pot_4_fast_delta, HIGH_PASS_MIN, HIGH_PASS_MAX);
                 apply_high_pass((uint8_t) high_pass_val);
             }
 
@@ -189,7 +197,6 @@ static inline void apply_deltas() {
     }
 
     if (pot_1_delta | pot_2_delta | pot_3_delta | pot_4_delta | pot_low_pass_changed | pot_select_delta) {
-        //printf("\033[2JAttack: %03d  Decay: %03d  Sustain: %03d  Release: %03d\nLow pass: %03d  Current menu: %03d\nWave type: %03d\nSequencer enable: %03d  Sequencer clear: %03d\nNote 1: %03d  Note 2: %03d  Note 3: %03d  Note 4: %03d\nNote 5: %03d  Note 6: %03d  Note 7: %03d  Note 8: %03d\n", attack_val, decay_val, sustain_val, release_val, low_pass_val, menu_select, wave_select_val, sequencer_enable_val, sequencer_clear_val, squ_note_1_val, squ_note_2_val, squ_note_3_val, squ_note_4_val, squ_note_5_val, squ_note_6_val, squ_note_7_val, squ_note_8_val);
         // Allow task_data_split() to execute
         xSemaphoreGive(ySplitterSemaphore);
     }
@@ -224,8 +231,13 @@ static inline void update_extra_delta_speed() {
 }
 
 void apply_low_pass(uint8_t val_to_apply) {
-    ESP_ERROR_CHECK(ledc_set_duty(LEDC_MODE, LOW_PASS_LEDC_CHANNEL, val_to_apply));
-    ESP_ERROR_CHECK(ledc_update_duty(LEDC_MODE, LOW_PASS_LEDC_CHANNEL));
+    if (val_to_apply == LOW_PASS_MAX) {
+        ESP_ERROR_CHECK(ledc_set_duty(LEDC_MODE, LOW_PASS_LEDC_CHANNEL, LOW_PASS_SAT_VAL));
+        ESP_ERROR_CHECK(ledc_update_duty(LEDC_MODE, LOW_PASS_LEDC_CHANNEL));
+    } else {
+        ESP_ERROR_CHECK(ledc_set_duty(LEDC_MODE, LOW_PASS_LEDC_CHANNEL, val_to_apply));
+        ESP_ERROR_CHECK(ledc_update_duty(LEDC_MODE, LOW_PASS_LEDC_CHANNEL));
+    }
 }
 
 void apply_high_pass(uint8_t val_to_apply) {
@@ -283,6 +295,31 @@ void task_adc() {
     }
 }
 
+static inline void advance_button() {
+    switch (button_current) {
+        case bnothing:
+            button_current = bhard;
+            // Apply the new clipping
+            ESP_ERROR_CHECK(gpio_set_level(HARD_CLIPPING_EN, 1));
+            ESP_ERROR_CHECK(gpio_set_level(SOFT_CLIPPING_EN, 0));
+            break;
+        case bhard:
+            button_current = bsoft;
+            // Apply the new clipping
+            ESP_ERROR_CHECK(gpio_set_level(HARD_CLIPPING_EN, 1));
+            ESP_ERROR_CHECK(gpio_set_level(SOFT_CLIPPING_EN, 0));
+            break;
+        case bsoft:
+            button_current = bnothing;
+            // Apply the new clipping
+            ESP_ERROR_CHECK(gpio_set_level(HARD_CLIPPING_EN, 0));
+            ESP_ERROR_CHECK(gpio_set_level(SOFT_CLIPPING_EN, 0));
+            break;
+        default:
+            button_current = bnothing;
+    }
+}
+
 void gpio_interrupt_handler(void *args) {
     int gpio_num = (int) args;
     switch (gpio_num) {
@@ -298,17 +335,13 @@ void gpio_interrupt_handler(void *args) {
             ESP_ERROR_CHECK(ledc_update_duty(LEDC_MODE, STATUS_LEDC_CHANNEL));
 
             // Test to ensure midi panic button and clipping outputs are functional
-            ESP_ERROR_CHECK(gpio_set_level(HARD_CLIPPING_EN, 1));
-            ESP_ERROR_CHECK(gpio_set_level(SOFT_CLIPPING_EN, 0));
             break;
         case EXTRA_BUTTON:
             // Test for PWM signals
             ESP_ERROR_CHECK(ledc_set_duty(LEDC_MODE, STATUS_LEDC_CHANNEL, 0b00000111));
             ESP_ERROR_CHECK(ledc_update_duty(LEDC_MODE, STATUS_LEDC_CHANNEL));
 
-            // Test to ensure extra button and clipping outputs are functional
-            ESP_ERROR_CHECK(gpio_set_level(SOFT_CLIPPING_EN, 1));
-            ESP_ERROR_CHECK(gpio_set_level(HARD_CLIPPING_EN, 0));
+            advance_button();
             break;
     }
 
@@ -319,7 +352,7 @@ static int32_t pot_low_pass_interpret() {
     uint_fast32_t mv_voltage = pot_low_pass_mv + pot_low_pass_last_mv + pot_low_pass_llast_mv + pot_low_pass_lllast_mv;
     mv_voltage /= 4;
 
-    return 77 + (10 * mv_voltage) / MAX_VOLTAGE_READ;
+    return LOW_PASS_MIN + ((LOW_PASS_MAX - LOW_PASS_MIN) * mv_voltage) / MAX_VOLTAGE_READ;
 }
 
 // Interpret rotary encoder value changes with tracked last state of target rotary encoder

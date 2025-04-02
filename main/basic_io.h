@@ -43,9 +43,16 @@
 #define CHOSEN_ADC_CALI_SCHEME    ESP_ADC_CAL_VAL_EFUSE_VREF
 
 #define DEFAULT_ENVELOPE_VALS    100
-#define DEFAULT_LOW_PASS_VAL     20
-#define DEFAULT_HIGH_PASS_VAL    28
+#define DEFAULT_LOW_PASS_VAL     86
+#define DEFAULT_HIGH_PASS_VAL    29
 #define DEFAULT_BLEND_VAL        1
+
+#define LOW_PASS_MAX        87
+#define LOW_PASS_MIN        77
+#define LOW_PASS_SAT_VAL    200
+
+#define HIGH_PASS_MAX       225
+#define HIGH_PASS_MIN       75
 
 #define BLEND_VAL_MIN            0
 #define BLEND_VAL_MAX            255
