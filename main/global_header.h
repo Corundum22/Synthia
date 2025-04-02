@@ -35,4 +35,10 @@ struct note_data_t {
     int_fast16_t multiplier;
 } typedef note_data;
 
+enum button_states_t {
+    bhard,
+    bsoft,
+    bnothing,
+} typedef button_states;
+
 #endif

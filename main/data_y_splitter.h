@@ -2,6 +2,7 @@
 #define DATA_Y_SPLITTER_
 
 #include <stdint.h>
+#include "basic_io.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/semphr.h"
 #include "global_header.h"
@@ -58,6 +59,9 @@ extern int_fast16_t squ_duration_gui;
 extern int_fast16_t squ_index_gui;
 extern int_fast16_t squ_program_index_gui;
 extern uint_fast8_t squ_pattern_gui[];
+
+// Current clipping type selected
+extern button_states button_current_gui;
 
 // GUI note data
 extern note_data note_properties_gui[NUM_VOICES + SEQ_VOICES];

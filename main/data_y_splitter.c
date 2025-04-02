@@ -61,6 +61,8 @@ int_fast16_t squ_index_gui = 0;
 int_fast16_t squ_program_index_gui = 0;
 uint_fast8_t squ_pattern_gui[SEQ_LEN];
 
+button_states button_current_gui = bnothing;
+
 // GUI note data
 note_data note_properties_gui[NUM_VOICES + SEQ_VOICES] = {{
     is_pressed: false,
@@ -108,6 +110,7 @@ static void copy_gui() {
     wave_select1_gui = wave_select1_val;
     wave_blend_gui = wave_blend_val;
     wave_select2_gui = wave_select2_val;
+    button_current_gui = button_current;
     squ_enable_gui = squ_enable_val;
     squ_length_gui = squ_length_val;
     squ_tempo_gui = squ_tempo_val;

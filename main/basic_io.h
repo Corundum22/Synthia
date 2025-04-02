@@ -100,6 +100,8 @@ extern int_fast16_t squ_length_val;
 extern int_fast16_t squ_tempo_val;
 extern int_fast16_t squ_duration_val;
 
+extern button_states button_current;
+
 
 void task_adc();
 

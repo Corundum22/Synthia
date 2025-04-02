@@ -98,12 +98,6 @@ int pot_low_pass_last_mv, pot_low_pass_llast_mv, pot_low_pass_lllast_mv = 0;
 // Note that the select_delta is intentionally absent
 int pot_1_fast_delta, pot_2_fast_delta, pot_3_fast_delta, pot_4_fast_delta;
 
-enum button_states_t {
-    bhard,
-    bsoft,
-    bnothing,
-} typedef button_states;
-
 button_states button_current = bnothing;
 
 
@@ -306,8 +300,8 @@ static inline void advance_button() {
         case bhard:
             button_current = bsoft;
             // Apply the new clipping
-            ESP_ERROR_CHECK(gpio_set_level(HARD_CLIPPING_EN, 1));
-            ESP_ERROR_CHECK(gpio_set_level(SOFT_CLIPPING_EN, 0));
+            ESP_ERROR_CHECK(gpio_set_level(HARD_CLIPPING_EN, 0));
+            ESP_ERROR_CHECK(gpio_set_level(SOFT_CLIPPING_EN, 1));
             break;
         case bsoft:
             button_current = bnothing;
