@@ -182,7 +182,10 @@ static inline void apply_deltas() {
                 squ_tempo_val = saturation_add(squ_tempo_val, pot_3_fast_delta, 1, 255);
                 update_squ_timer(squ_tempo_val);
             }
-            squ_duration_val = saturation_add(squ_duration_val, pot_4_fast_delta, 1, SQU_DURATION_MAX);
+            if (pot_4_fast_delta) {
+                squ_duration_val = saturation_add(squ_duration_val, pot_4_fast_delta, 1, SQU_DURATION_MAX);
+                update_squ_timer(squ_tempo_val);
+            }
 
             break;
         default:

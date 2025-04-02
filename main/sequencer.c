@@ -109,7 +109,12 @@ void sequencer_timer_callback() {
 
         }
 
+        next_is_on_squ_press = !next_is_on_squ_press;
+        update_squ_timer(squ_tempo_squ);
+
     }
+
+    printf("%d\n", squ_index);
 }
 
 void program_sequencer(uint_fast8_t key_num){
