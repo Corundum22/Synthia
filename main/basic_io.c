@@ -180,11 +180,15 @@ static inline void apply_deltas() {
             squ_length_val = saturation_add(squ_length_val, pot_2_fast_delta, 0, SEQ_LEN);
             if (pot_3_fast_delta) {
                 squ_tempo_val = saturation_add(squ_tempo_val, pot_3_fast_delta, 1, 255);
-                update_squ_timer(squ_tempo_val);
+                if (squ_enable_val) {
+                    update_squ_timer(squ_tempo_val);
+                }
             }
             if (pot_4_fast_delta) {
                 squ_duration_val = saturation_add(squ_duration_val, pot_4_fast_delta, 1, SQU_DURATION_MAX);
-                update_squ_timer(squ_tempo_val);
+                if (squ_enable_val) {
+                    update_squ_timer(squ_tempo_val);
+                }
             }
 
             break;
