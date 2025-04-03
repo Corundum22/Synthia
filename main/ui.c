@@ -7,6 +7,12 @@
 #define WHITE_SQUARE_BORDER lv_color_hex(0xB0B0B0)
 #define BLACK_SQUARE_BORDER lv_color_hex(0x606060)
 
+//<testing>
+//#define high_pass_gui 200
+//#define low_pass_gui 83
+//#define button_current_gui bsoft
+//</testing>
+
 const int SCREEN_WIDTH = 320;
 const int SCREEN_HEIGHT = 480;
 lv_obj_t* curr_scr = NULL;
@@ -35,7 +41,7 @@ lv_obj_t* menu[4];
 lv_obj_t* menu_text[4];
 lv_obj_t* menu_bar[4];
 lv_obj_t* button_panel;
-lv_obj_t* button_text[4];
+lv_obj_t* button_text[5];
 
 static lv_style_t bar_bg_style;
 static lv_style_t bar_ind_style;
@@ -70,6 +76,9 @@ uint_fast8_t squ_enable_old = -1;
 
 //VIZ
 #define NUM_BARS 20
+#define VIZUALIZER_COLOR lv_color_hex(0xFF5A4E) //darker 0xC9473E //brightest FF5A4E
+#define VIZUALIZER_MAXCOLOR lv_color_hex(0x0000BF)
+#define VIZUALIZER_COLOR_BG lv_color_hex(0x822E28)
 const int VIZ_PADDING = 2;
 const int BAR_HEIGHT = 1+ (VIZ_HEIGHT - NUM_BARS*9) / NUM_BARS;
 
@@ -224,6 +233,9 @@ lv_obj_t* bars[NUM_BARS];
 uint16_t bar_vals[NUM_BARS];
 
 lv_obj_t* low_pass_bar;
+static lv_style_t br_style;
+static lv_style_t bg_style;
+int wunused_variable = 0;
 
 uint32_t mask = 0;
 
@@ -252,6 +264,14 @@ void update_ui_cb(lv_timer_t* timer) {
             if(menu_select_gui == madsr || menu_select_gui == mwave){
                 lv_obj_set_parent(roller, scr0);
                 lv_obj_set_pos(roller, 5, 5);
+                if(menu_select_gui == madsr){
+                    lv_obj_clear_flag(menu_bar[0], LV_OBJ_FLAG_HIDDEN);
+                    lv_obj_clear_flag(menu_bar[2], LV_OBJ_FLAG_HIDDEN);
+                }
+                else{
+                    lv_obj_add_flag(menu_bar[0], LV_OBJ_FLAG_HIDDEN);
+                    lv_obj_add_flag(menu_bar[2], LV_OBJ_FLAG_HIDDEN);
+                }
             }
             if(menu_select_gui == msequencer_setup){
                 lv_obj_set_parent(roller, scr1);
@@ -263,7 +283,7 @@ void update_ui_cb(lv_timer_t* timer) {
         switch(menu_select_gui){
             case madsr:
                 if(curr_scr != scr0){lv_scr_load(scr0); curr_scr = scr0;}
-                if(menu_select_gui != menu_select_gui_prev){lv_obj_clear_flag(menu_bar[0], LV_OBJ_FLAG_HIDDEN); lv_obj_clear_flag(menu_bar[2], LV_OBJ_FLAG_HIDDEN); menu_select_gui_prev = madsr;}
+                if(menu_select_gui != menu_select_gui_prev){menu_select_gui_prev = madsr;}
 
 
                 lv_label_set_text_fmt(menu_text[0], "Attack: %d", attack_gui);
@@ -273,6 +293,7 @@ void update_ui_cb(lv_timer_t* timer) {
                 lv_bar_set_value(menu_bar[0], attack_gui, LV_ANIM_OFF);
                 lv_bar_set_value(menu_bar[1], decay_gui, LV_ANIM_OFF);
                 lv_bar_set_value(menu_bar[2], sustain_gui, LV_ANIM_OFF);
+                lv_bar_set_range(menu_bar[3],           0,         255);
                 lv_bar_set_value(menu_bar[3], release_gui, LV_ANIM_OFF);
 
                 update_visualizer_vals();
@@ -284,21 +305,34 @@ void update_ui_cb(lv_timer_t* timer) {
 
                 update_top_left();
 
-                lv_bar_set_value(low_pass_bar, low_pass_gui, LV_ANIM_ON);
+                if(low_pass_gui == 87){
+                    lv_style_set_bg_color(&br_style, VIZUALIZER_MAXCOLOR);
+                    lv_obj_add_style(low_pass_bar, &br_style, LV_PART_INDICATOR);
+                    lv_bar_set_value(low_pass_bar, 86, LV_ANIM_ON);
+                }
+                else{
+                    lv_style_set_bg_color(&br_style, VIZUALIZER_COLOR);
+                    lv_obj_add_style(low_pass_bar, &br_style, LV_PART_INDICATOR);
+                    lv_bar_set_value(low_pass_bar, low_pass_gui, LV_ANIM_ON);
+                }
+                
                 break;
 
             case mwave:
                 if(curr_scr != scr0){lv_scr_load(scr0); curr_scr = scr0;}
-                if(menu_select_gui != menu_select_gui_prev){lv_obj_add_flag(menu_bar[0], LV_OBJ_FLAG_HIDDEN); lv_obj_add_flag(menu_bar[2], LV_OBJ_FLAG_HIDDEN); menu_select_gui_prev = mwave;}
+                if(menu_select_gui != menu_select_gui_prev){menu_select_gui_prev = mwave;}
 
                 lv_label_set_text_fmt(menu_text[0], "Wave 1: %s", get_wave_name(wave_select1_gui));
-                lv_label_set_text_fmt(menu_text[1], "Blend Amount: %d", wave_blend_gui);
+                lv_label_set_text_fmt(menu_text[1], "Blend Amount: %d%%", wave_blend_gui/255);
                 lv_label_set_text_fmt(menu_text[2], "Wave 2: %s", get_wave_name(wave_select2_gui));
-                lv_label_set_text_fmt(menu_text[3], "High Pass: %d", high_pass_gui);
+                int_fast16_t highpassdisplayval = (high_pass_gui-75)/150;
+                lv_label_set_text_fmt(menu_text[3], "High Pass: %d%%", highpassdisplayval);
                 lv_bar_set_value(menu_bar[1], wave_blend_gui, LV_ANIM_OFF);
+                lv_bar_set_range(menu_bar[3],             75,         225);
                 lv_bar_set_value(menu_bar[3], high_pass_gui, LV_ANIM_OFF);
                         
-                update_visualizer_vals();       
+                update_visualizer_vals();   
+                
 
                 for(int i = 0; i < NUM_BARS; i++){
                     lv_bar_set_value(bars[i], bar_vals[i], LV_ANIM_ON);
@@ -306,7 +340,17 @@ void update_ui_cb(lv_timer_t* timer) {
                 
                 update_top_left();
 
-                lv_bar_set_value(low_pass_bar, low_pass_gui, LV_ANIM_ON);
+                if(low_pass_gui == 87){
+                    lv_style_set_bg_color(&br_style, VIZUALIZER_MAXCOLOR);
+                    lv_obj_add_style(low_pass_bar, &br_style, LV_PART_INDICATOR);
+                    lv_bar_set_value(low_pass_bar, 86, LV_ANIM_ON);
+                }
+                else{
+                    lv_style_set_bg_color(&br_style, VIZUALIZER_COLOR);
+                    lv_obj_add_style(low_pass_bar, &br_style, LV_PART_INDICATOR);
+                    lv_bar_set_value(low_pass_bar, low_pass_gui, LV_ANIM_ON);
+                }
+
                 break;
 
             case msequencer_setup:
@@ -384,11 +428,12 @@ void create_menu() {
     lv_obj_set_flex_flow(button_panel, LV_FLEX_FLOW_COLUMN);
     lv_obj_set_flex_align(button_panel, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
 
-
-    for(int i = 0; i < 4; i++){
+    for(int i = 0; i < 5; i++){
         button_text[i] = lv_label_create(button_panel);
         generic_txt_format(button_text[i], lv_color_black());
     }
+    lv_obj_set_scrollbar_mode(button_panel, LV_SCROLLBAR_MODE_OFF);
+    lv_obj_add_flag(button_text[4], LV_OBJ_FLAG_HIDDEN);
 
 
     // Create menu panels
@@ -486,8 +531,24 @@ void create_squ(){
 }
 
 void update_top_left(){
-    int count = 0;
+
+    switch(button_current_gui){
+        case bnothing:
+            lv_label_set_text(button_text[0], "No Clipping");
+            break;
+
+        case bhard:
+            lv_label_set_text(button_text[0], "Hard Clipping");
+            break;
+
+        case bsoft:
+            lv_label_set_text(button_text[0], "Soft Clipping");
+            break;
+    }
+
+    int count = 1;
     int num = 128;
+
     for(uint_fast8_t i = 0; i < NUM_VOICES + SEQ_VOICES; i++){
         if(note_properties_gui[i].is_sounding){
             num = note_properties_gui[i].note_num;
@@ -496,7 +557,13 @@ void update_top_left(){
             count++;
         }
     }
-    while(count < 4){
+    if(count == 5){
+        lv_obj_clear_flag(button_text[4], LV_OBJ_FLAG_HIDDEN);
+    }
+    else{
+        lv_obj_add_flag(button_text[4], LV_OBJ_FLAG_HIDDEN);
+    }
+    while(count < 5){
         lv_label_set_text_fmt(button_text[count], " ");
         count++;
     }
@@ -552,14 +619,12 @@ void create_visualizer(){
     lv_obj_set_flex_align(row_container, LV_FLEX_ALIGN_START, LV_FLEX_ALIGN_START, LV_FLEX_ALIGN_START);
     lv_obj_remove_style_all(row_container);
 
-    static lv_style_t bar_style;
-    lv_style_init(&bar_style);
-    lv_style_set_bg_color(&bar_style, lv_color_hex(0xEB5348));
-    lv_style_set_border_width(&bar_style, 0);
+    lv_style_init(&br_style);
+    lv_style_set_bg_color(&br_style, VIZUALIZER_COLOR);
+    lv_style_set_border_width(&br_style, 0);
 
-    static lv_style_t bg_style;
     lv_style_init(&bg_style);
-    lv_style_set_bg_color(&bg_style, lv_color_hex(0x822E28)); //darker 0xC9473E //brightest FF5A4E
+    lv_style_set_bg_color(&bg_style, VIZUALIZER_COLOR_BG);
     lv_style_set_border_width(&bg_style, 0);
 
 
@@ -570,7 +635,7 @@ void create_visualizer(){
         lv_obj_set_size(bars[i], LEFT_PANEL_WIDTH - BORDER_WIDTH*2 - VIZ_PADDING*2 - LOW_PASS_BAR_WIDTH*2 - BAR_OFFSET, BAR_HEIGHT);
         lv_obj_set_pos(bars[i], BAR_OFFSET, (BAR_HEIGHT+7) * i + 8);
         lv_bar_set_range(bars[i], 0, 65535);
-        lv_obj_add_style(bars[i], &bar_style, LV_PART_INDICATOR);
+        lv_obj_add_style(bars[i], &br_style, LV_PART_INDICATOR);
         lv_obj_add_style(bars[i], &bg_style, LV_PART_MAIN);
     }
 
@@ -579,7 +644,7 @@ void create_visualizer(){
     lv_obj_set_pos(low_pass_bar, LEFT_PANEL_WIDTH - LOW_PASS_BAR_WIDTH*2 - BAR_OFFSET-2, 7);
     lv_bar_set_range(low_pass_bar, 77, 86);
     lv_obj_add_style(low_pass_bar, &bg_style, LV_PART_MAIN);
-    lv_obj_add_style(low_pass_bar, &bar_style, LV_PART_INDICATOR);
+    lv_obj_add_style(low_pass_bar, &br_style, LV_PART_INDICATOR);
 }
 
 void generic_obj_format(lv_obj_t* o, lv_color_t c){
@@ -598,7 +663,7 @@ void generic_obj_format(lv_obj_t* o, lv_color_t c){
 void bar_style(lv_obj_t* bar, lv_style_t* bg, lv_style_t* ind){
 
     lv_color_t inner_color = lv_color_hex(0x822E28);
-    lv_color_t outer_color = lv_color_hex(0xCC483F); //BGR // todo
+    lv_color_t outer_color = lv_color_hex(0xCC483F);
     
     //border
     lv_style_init(bg);

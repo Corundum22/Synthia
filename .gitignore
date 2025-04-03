@@ -10,3 +10,4 @@ managed_components
 /.vs/VSWorkspaceState.json
 /.vs/Synthia/v17
 /.vscode/
+sdkconfig
