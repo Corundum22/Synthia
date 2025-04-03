@@ -2,13 +2,13 @@ from math import *
 from fractions import Fraction
 
 MAX_LINE_LEN = 60
-NUM_VALUES = 256
-STARTING_LINE = "uint_fast8_t triangle_array[] = { "
+NUM_VALUES = 128
+STARTING_LINE = "uint32_t ratio_denom[] = { "
 LEFT_SPACES = 4
 
 
 def func_to_apply(x):
-    return triangle(x)
+    return tuning_denominator(x)
 
 orwell12_cents = [0.0, 157.14286, 271.42857, 385.71429, 428.57143,
              542.85714, 657.14286, 700.00000, 814.28571, 928.57143, 
@@ -18,26 +18,29 @@ rastplus_cents = [0.0, 147.8781, 197.7730, 348.4100, 361.8828, 499.4228, 552.320
 just_intonation = [0.0, 90.0, 204.0, 294.0, 408.0, 498.0, 558.0, 702.0, 792, 906, 996, 1110.0]
 pythagorean = [0.0, 90.22500, 203.91000, 294.13500, 407.82000, 498.04500, 611.73001,
                701.95500, 792.18000, 905.86500, 996.09000, 1109.77500]
+tet12 = [0.0, 100.0, 200.0, 300.0, 400.0, 500.0, 600.0, 700.0, 800.0, 900.0, 1000.0, 1100.0];
 
 # this selects which tuning will be passed into tuning_denominator and tuning_numerator
-tuning_cents = orwell12_cents
+tuning_cents = [x / 100.0 for x in tet12]
 
 
 def tuning_denominator(x):
-    x_rem = int(x / 12)
-    x_mod = x % 12
-    current_freq = 440 * 2**((x_rem - 69 + (tuning_cents[x_mod] / 100)) / 12)
-    target_val = 44100 / (2**8 * current_freq)
-    frac_res = Fraction(*target_val.as_integer_ratio()).limit_denominator(1200)
-    return frac_res.numerator
+    #x_rem = int(x / 12)
+    #x_mod = x % 12
+    current_freq = 440 * 2**((x - 69.0) / 12.0)
+    target_val = 96000 / (2**8 * current_freq)
+    frac_res = Fraction(*target_val.as_integer_ratio()).limit_denominator(100000)
+    frac_res = (1 / frac_res).limit_denominator(100000)
+    return frac_res.denominator
 
 def tuning_numerator(x):
-    x_rem = int(x / 12)
-    x_mod = x % 12
-    current_freq = 440 * 2**((x_rem - 69 + (tuning_cents[x_mod] / 100)) / 12)
-    target_val = 44100 / (2**8 * current_freq)
-    frac_res = Fraction(*target_val.as_integer_ratio()).limit_denominator(1200)
-    return frac_res.denominator
+    #x_rem = int(x / 12)
+    #x_mod = x % 12
+    current_freq = 440 * 2**((x - 69.0) / 12.0)
+    target_val = 96000 / (2**8 * current_freq)
+    frac_res = Fraction(*target_val.as_integer_ratio()).limit_denominator(100000)
+    frac_res = (1 / frac_res).limit_denominator(100000)
+    return frac_res.numerator
 
 def triangle(x):
     if (x < 64):
