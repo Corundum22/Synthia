@@ -44,13 +44,13 @@
 
 #define DEFAULT_ENVELOPE_VALS    100
 #define DEFAULT_LOW_PASS_VAL     86
-#define DEFAULT_HIGH_PASS_VAL    29
+#define DEFAULT_HIGH_PASS_VAL    75
 #define DEFAULT_BLEND_VAL        1
 
-#define LOW_PASS_MAX        88
-#define LOW_PASS_MIN        77
-#define LOW_PASS_TH         87
-#define LOW_PASS_SAT_VAL    200
+#define LOW_PASS_MAX        180
+#define LOW_PASS_MIN        30
+#define LOW_PASS_TH         172
+#define LOW_PASS_SAT_VAL    240
 
 #define HIGH_PASS_MAX       225
 #define HIGH_PASS_MIN       75

@@ -140,7 +140,7 @@ void task_audio_generate() {
         // Advance each note's envelope
         envelope_advance();
 
-        ESP_ERROR_CHECK(dac_continuous_write(dac_handle, data_array, AUDIO_BUF_SIZE * NUM_DAC_CHANNELS, NULL, -1));
+        ESP_ERROR_CHECK(dac_continuous_write_cyclically(dac_handle, data_array, AUDIO_BUF_SIZE * NUM_DAC_CHANNELS, NULL));
    
 
     }

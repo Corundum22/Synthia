@@ -90,7 +90,7 @@ static rotary_state select_last_rotary = rwait;
 int extra_speed_1, extra_speed_2, extra_speed_3, extra_speed_4, extra_speed_select = 1;
 
 // Encoder delta trackers
-int pot_1_delta, pot_2_delta, pot_3_delta, pot_4_delta, pot_select_delta = 0;
+int pot_1_delta, pot_2_delta, pot_3_delta, pot_4_delta, pot_select_delta = 1;
 int pot_low_pass_mv = 0;
 int pot_low_pass_last_mv, pot_low_pass_llast_mv, pot_low_pass_lllast_mv = 0;
 
@@ -152,10 +152,10 @@ static inline void apply_deltas() {
 
     switch (menu_select) {
         case madsr:
-            attack_val = saturation_add(attack_val, pot_1_fast_delta, MIN_ENVELOPE_VAL, MAX_ENVELOPE_VAL);
-            decay_val = saturation_add(decay_val, pot_2_fast_delta, MIN_ENVELOPE_VAL, MAX_ENVELOPE_VAL);
-            sustain_val = saturation_add(sustain_val, pot_3_fast_delta, MIN_ENVELOPE_VAL, MAX_ENVELOPE_VAL);
-            release_val = saturation_add(release_val, pot_4_fast_delta, MIN_ENVELOPE_VAL, MAX_ENVELOPE_VAL);
+            attack_val = saturation_add(attack_val, pot_1_fast_delta, LOW_ENVELOPE_VAL, MAX_ENVELOPE_VAL);
+            decay_val = saturation_add(decay_val, pot_2_fast_delta, LOW_ENVELOPE_VAL, MAX_ENVELOPE_VAL);
+            sustain_val = saturation_add(sustain_val, pot_3_fast_delta, LOW_ENVELOPE_VAL, MAX_ENVELOPE_VAL);
+            release_val = saturation_add(release_val, pot_4_fast_delta, LOW_ENVELOPE_VAL, MAX_ENVELOPE_VAL);
 
             break;
         case mwave:

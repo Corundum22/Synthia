@@ -96,10 +96,14 @@ void task_midi_uart(void *pvParameters) {
                                 break;
 
                             case note_on_velocity:
-                                //printf("in on velocity\n\n");
                                 velocity = dtmp[i];
+                                //printf("in on velocity %d\n\n", velocity);
                                 current_midi_event = waiting;
-                                set_keypress(key_num);
+                                if (velocity != 0) {
+                                    set_keypress(key_num);
+                                } else {
+                                    set_keyrelease(key_num);
+                                }
                                 break;
                             
                             case note_off_velocity:

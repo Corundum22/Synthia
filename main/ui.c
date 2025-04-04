@@ -307,11 +307,11 @@ void update_ui_cb(lv_timer_t* timer) {
 
                 update_top_left();
 
-                if(low_pass_gui >= 87){
+                if(low_pass_gui >= LOW_PASS_TH){
                     if (low_pass_style_already_max_set == false) {
                         lv_style_set_bg_color(&br_style, VIZUALIZER_MAXCOLOR);
                         lv_obj_add_style(low_pass_bar, &br_style, LV_PART_INDICATOR);
-                        lv_bar_set_value(low_pass_bar, 86, LV_ANIM_ON);
+                        lv_bar_set_value(low_pass_bar, LOW_PASS_TH, LV_ANIM_ON);
                     }
                     low_pass_style_already_max_set = true;
                 }
@@ -331,9 +331,9 @@ void update_ui_cb(lv_timer_t* timer) {
                 if(menu_select_gui != menu_select_gui_prev){menu_select_gui_prev = mwave;}
 
                 lv_label_set_text_fmt(menu_text[0], "Wave 1: %s", get_wave_name(wave_select1_gui));
-                lv_label_set_text_fmt(menu_text[1], "Blend Amount: %d%%", wave_blend_gui/255);
+                lv_label_set_text_fmt(menu_text[1], "Blend Amount: %d%%", (wave_blend_gui * 100) / 255);
                 lv_label_set_text_fmt(menu_text[2], "Wave 2: %s", get_wave_name(wave_select2_gui));
-                int_fast16_t highpassdisplayval = (high_pass_gui-75)/150;
+                int_fast16_t highpassdisplayval = ((high_pass_gui - HIGH_PASS_MIN) * 100) / (HIGH_PASS_MAX - HIGH_PASS_MIN);
                 lv_label_set_text_fmt(menu_text[3], "High Pass: %d%%", highpassdisplayval);
                 lv_bar_set_value(menu_bar[1], wave_blend_gui, LV_ANIM_OFF);
                 lv_bar_set_range(menu_bar[3],             75,         225);
@@ -348,11 +348,11 @@ void update_ui_cb(lv_timer_t* timer) {
                 
                 update_top_left();
 
-                if(low_pass_gui >= 87){
+                if(low_pass_gui >= LOW_PASS_TH){
                     if (low_pass_style_already_max_set == false) {
                         lv_style_set_bg_color(&br_style, VIZUALIZER_MAXCOLOR);
                         lv_obj_add_style(low_pass_bar, &br_style, LV_PART_INDICATOR);
-                        lv_bar_set_value(low_pass_bar, 86, LV_ANIM_ON);
+                        lv_bar_set_value(low_pass_bar, LOW_PASS_TH, LV_ANIM_ON);
                     }
                     low_pass_style_already_max_set = true;
                 }
@@ -656,7 +656,7 @@ void create_visualizer(){
     low_pass_bar = lv_bar_create(viz_panel);
     lv_obj_set_size(low_pass_bar, LOW_PASS_BAR_WIDTH, VIZ_HEIGHT-25);
     lv_obj_set_pos(low_pass_bar, LEFT_PANEL_WIDTH - LOW_PASS_BAR_WIDTH*2 - BAR_OFFSET-2, 7);
-    lv_bar_set_range(low_pass_bar, 77, 86);
+    lv_bar_set_range(low_pass_bar, LOW_PASS_MIN, LOW_PASS_TH);
     lv_obj_add_style(low_pass_bar, &bg_style, LV_PART_MAIN);
     lv_obj_add_style(low_pass_bar, &br_style, LV_PART_INDICATOR);
 }
