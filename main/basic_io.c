@@ -232,7 +232,7 @@ static inline void update_extra_delta_speed() {
 }
 
 void apply_low_pass(uint8_t val_to_apply) {
-    if (val_to_apply == LOW_PASS_MAX) {
+    if (val_to_apply >= LOW_PASS_TH) {
         ESP_ERROR_CHECK(ledc_set_duty(LEDC_MODE, LOW_PASS_LEDC_CHANNEL, LOW_PASS_SAT_VAL));
         ESP_ERROR_CHECK(ledc_update_duty(LEDC_MODE, LOW_PASS_LEDC_CHANNEL));
     } else {
@@ -343,6 +343,7 @@ void gpio_interrupt_handler(void *args) {
             ESP_ERROR_CHECK(ledc_update_duty(LEDC_MODE, STATUS_LEDC_CHANNEL));
 
             advance_button();
+            xSemaphoreGive(ySplitterSemaphore);
             break;
     }
 

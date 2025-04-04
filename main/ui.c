@@ -246,6 +246,8 @@ bool menu_not_stable = false;
 uint_fast16_t stable_counter = 0;
 lv_obj_t* roller = NULL;
 
+bool low_pass_style_already_max_set = false;
+
 
 void update_ui_cb(lv_timer_t* timer) {
 
@@ -305,14 +307,20 @@ void update_ui_cb(lv_timer_t* timer) {
 
                 update_top_left();
 
-                if(low_pass_gui == 87){
-                    lv_style_set_bg_color(&br_style, VIZUALIZER_MAXCOLOR);
-                    lv_obj_add_style(low_pass_bar, &br_style, LV_PART_INDICATOR);
-                    lv_bar_set_value(low_pass_bar, 86, LV_ANIM_ON);
+                if(low_pass_gui >= 87){
+                    if (low_pass_style_already_max_set == false) {
+                        lv_style_set_bg_color(&br_style, VIZUALIZER_MAXCOLOR);
+                        lv_obj_add_style(low_pass_bar, &br_style, LV_PART_INDICATOR);
+                        lv_bar_set_value(low_pass_bar, 86, LV_ANIM_ON);
+                    }
+                    low_pass_style_already_max_set = true;
                 }
                 else{
-                    lv_style_set_bg_color(&br_style, VIZUALIZER_COLOR);
-                    lv_obj_add_style(low_pass_bar, &br_style, LV_PART_INDICATOR);
+                    if (low_pass_style_already_max_set == true) {
+                        lv_style_set_bg_color(&br_style, VIZUALIZER_COLOR);
+                        lv_obj_add_style(low_pass_bar, &br_style, LV_PART_INDICATOR);
+                    }
+                    low_pass_style_already_max_set = false;
                     lv_bar_set_value(low_pass_bar, low_pass_gui, LV_ANIM_ON);
                 }
                 
@@ -340,14 +348,20 @@ void update_ui_cb(lv_timer_t* timer) {
                 
                 update_top_left();
 
-                if(low_pass_gui == 87){
-                    lv_style_set_bg_color(&br_style, VIZUALIZER_MAXCOLOR);
-                    lv_obj_add_style(low_pass_bar, &br_style, LV_PART_INDICATOR);
-                    lv_bar_set_value(low_pass_bar, 86, LV_ANIM_ON);
+                if(low_pass_gui >= 87){
+                    if (low_pass_style_already_max_set == false) {
+                        lv_style_set_bg_color(&br_style, VIZUALIZER_MAXCOLOR);
+                        lv_obj_add_style(low_pass_bar, &br_style, LV_PART_INDICATOR);
+                        lv_bar_set_value(low_pass_bar, 86, LV_ANIM_ON);
+                    }
+                    low_pass_style_already_max_set = true;
                 }
                 else{
-                    lv_style_set_bg_color(&br_style, VIZUALIZER_COLOR);
-                    lv_obj_add_style(low_pass_bar, &br_style, LV_PART_INDICATOR);
+                    if (low_pass_style_already_max_set == true) {
+                        lv_style_set_bg_color(&br_style, VIZUALIZER_COLOR);
+                        lv_obj_add_style(low_pass_bar, &br_style, LV_PART_INDICATOR);
+                    }
+                    low_pass_style_already_max_set = false;
                     lv_bar_set_value(low_pass_bar, low_pass_gui, LV_ANIM_ON);
                 }
 

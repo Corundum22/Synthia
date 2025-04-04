@@ -47,8 +47,9 @@
 #define DEFAULT_HIGH_PASS_VAL    29
 #define DEFAULT_BLEND_VAL        1
 
-#define LOW_PASS_MAX        87
+#define LOW_PASS_MAX        88
 #define LOW_PASS_MIN        77
+#define LOW_PASS_TH         87
 #define LOW_PASS_SAT_VAL    200
 
 #define HIGH_PASS_MAX       225
