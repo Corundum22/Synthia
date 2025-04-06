@@ -301,20 +301,20 @@ static inline void advance_button() {
         case bnothing:
             button_current = bhard;
             // Apply the new clipping
-            ESP_ERROR_CHECK(gpio_set_level(HARD_CLIPPING_EN, 1));
-            ESP_ERROR_CHECK(gpio_set_level(SOFT_CLIPPING_EN, 0));
+            ESP_ERROR_CHECK(gpio_set_level(HARD_CLIPPING_EN, 0));
+            ESP_ERROR_CHECK(gpio_set_level(SOFT_CLIPPING_EN, 1));
             break;
         case bhard:
             button_current = bsoft;
             // Apply the new clipping
-            ESP_ERROR_CHECK(gpio_set_level(HARD_CLIPPING_EN, 0));
-            ESP_ERROR_CHECK(gpio_set_level(SOFT_CLIPPING_EN, 1));
+            ESP_ERROR_CHECK(gpio_set_level(HARD_CLIPPING_EN, 1));
+            ESP_ERROR_CHECK(gpio_set_level(SOFT_CLIPPING_EN, 0));
             break;
         case bsoft:
             button_current = bnothing;
             // Apply the new clipping
-            ESP_ERROR_CHECK(gpio_set_level(HARD_CLIPPING_EN, 0));
-            ESP_ERROR_CHECK(gpio_set_level(SOFT_CLIPPING_EN, 0));
+            ESP_ERROR_CHECK(gpio_set_level(HARD_CLIPPING_EN, 1));
+            ESP_ERROR_CHECK(gpio_set_level(SOFT_CLIPPING_EN, 1));
             break;
         default:
             button_current = bnothing;
