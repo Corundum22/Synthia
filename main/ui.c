@@ -4,14 +4,24 @@
 #include "data_y_splitter.h"
 #include "ui.h"
 
-#define WHITE_SQUARE_BORDER lv_color_hex(0xB0B0B0)
-#define BLACK_SQUARE_BORDER lv_color_hex(0x606060)
+//COLOURS
 
-//<testing>
-//#define high_pass_gui 200
-//#define low_pass_gui 83
-//#define button_current_gui bsoft
-//</testing>
+#define MAIN_THEME_COLOUR 0x822E28
+
+#define WHITE_SQUARE_BORDER         lv_color_hex(0xB0B0B0)
+#define BLACK_SQUARE_BORDER         lv_color_hex(0x606060)
+
+#define BAR_INNER_COLOUR            lv_color_hex(MAIN_THEME_COLOUR)
+#define BAR_OUTER_COLOUR            lv_color_hex(0xCC483F)
+
+#define ROLLER_COLOUR               lv_color_hex(MAIN_THEME_COLOUR)
+
+#define VIZUALIZER_ACTIVE_COLOUR    lv_color_hex(0xFF5A4E) //darker 0xC9473E //brightest FF5A4E
+#define VIZUALIZER_INACTIVE_COLOUR  lv_color_hex(MAIN_THEME_COLOUR)
+#define VIZUALIZER_MAXCOLOR         lv_color_hex(0x0000BF)
+
+#define SQU_PLAYING_COLOUR          lv_color_hex(0xff0000)
+#define SQU_PROGRAMMING_COLOUR      lv_color_hex(0x0000ff)
 
 const int SCREEN_WIDTH = 320;
 const int SCREEN_HEIGHT = 480;
@@ -76,9 +86,6 @@ uint_fast8_t squ_enable_old = -1;
 
 //VIZ
 #define NUM_BARS 20
-#define VIZUALIZER_COLOR lv_color_hex(0xFF5A4E) //darker 0xC9473E //brightest FF5A4E
-#define VIZUALIZER_MAXCOLOR lv_color_hex(0x0000BF)
-#define VIZUALIZER_COLOR_BG lv_color_hex(0x822E28)
 const int VIZ_PADDING = 2;
 const int BAR_HEIGHT = 1+ (VIZ_HEIGHT - NUM_BARS*9) / NUM_BARS;
 
@@ -315,7 +322,7 @@ void update_ui_cb(lv_timer_t* timer) {
                 }
                 else{
                     if (low_pass_style_already_max_set == true) {
-                        lv_style_set_bg_color(&br_style, VIZUALIZER_COLOR);
+                        lv_style_set_bg_color(&br_style, VIZUALIZER_ACTIVE_COLOUR);
                         lv_obj_add_style(low_pass_bar, &br_style, LV_PART_INDICATOR);
                     }
                     low_pass_style_already_max_set = false;
@@ -356,7 +363,7 @@ void update_ui_cb(lv_timer_t* timer) {
                 }
                 else{
                     if (low_pass_style_already_max_set == true) {
-                        lv_style_set_bg_color(&br_style, VIZUALIZER_COLOR);
+                        lv_style_set_bg_color(&br_style, VIZUALIZER_ACTIVE_COLOUR);
                         lv_obj_add_style(low_pass_bar, &br_style, LV_PART_INDICATOR);
                     }
                     low_pass_style_already_max_set = false;
@@ -380,7 +387,7 @@ void update_ui_cb(lv_timer_t* timer) {
                     }
                     uint_fast8_t prev = (squ_index_gui+63)%64;
                     lv_obj_set_style_border_color(array[prev][0], (prev+prev/8)%2 ? BLACK_SQUARE_BORDER : WHITE_SQUARE_BORDER, LV_PART_MAIN | LV_STATE_DEFAULT);
-                    lv_obj_set_style_border_color(array[squ_index_gui][0], lv_color_hex(0xff0000), LV_PART_MAIN | LV_STATE_DEFAULT);
+                    lv_obj_set_style_border_color(array[squ_index_gui][0], SQU_PLAYING_COLOUR, LV_PART_MAIN | LV_STATE_DEFAULT);
 
                 }
                 else{
@@ -408,7 +415,7 @@ void update_ui_cb(lv_timer_t* timer) {
 
 
                     lv_label_set_text_fmt(array[curr][1], "%s", midi_note_name);
-                    lv_obj_set_style_border_color(array[squ_program_index_gui][0], lv_color_hex(0x0000ff), LV_PART_MAIN | LV_STATE_DEFAULT);
+                    lv_obj_set_style_border_color(array[squ_program_index_gui][0], SQU_PROGRAMMING_COLOUR, LV_PART_MAIN | LV_STATE_DEFAULT);
                 }
                 
                 lv_label_set_text_fmt(progress_text, "Progress: %d/%d", squ_program_index_gui+1, squ_length_gui);
@@ -417,7 +424,7 @@ void update_ui_cb(lv_timer_t* timer) {
                 lv_label_set_text_fmt(tempo_text, "Tempo: %d", squ_tempo_gui);
                 lv_label_set_text_fmt(duration_text, "Duration: %d%%", squ_duration_gui);
 
-                lv_bar_set_range(progress_bar, squ_length_gui);
+                lv_bar_set_range(progress_bar, 0, squ_length_gui);
                 lv_bar_set_value(progress_bar, squ_program_index_gui, LV_ANIM_ON);
                 squ_enable_old = squ_enable_gui;
                 break;
@@ -509,7 +516,7 @@ void create_squ(){
     lv_obj_set_size(progress_bar, PROGRESS_BAR_WIDTH, PROGRESS_BAR_HEIGHT);
     lv_obj_set_pos(progress_panel, BORDER_WIDTH, BORDER_WIDTH);
     lv_bar_set_value(progress_bar, 0, LV_ANIM_OFF);
-    lv_bar_set_range(progress_bar, 0, 64);
+    lv_bar_set_range(progress_bar, 0, squ_length_gui);
     bar_style(progress_bar, &bar_bg_style, &bar_ind_style);
 
     // Tempo - Length - Duration - Enable
@@ -595,7 +602,7 @@ void create_roller(){
     static lv_style_t roller_style;
 
     lv_style_init(&roller_style);
-    lv_style_set_bg_color(&roller_style, lv_color_hex(0x822E28));
+    lv_style_set_bg_color(&roller_style, ROLLER_COLOUR);
     lv_obj_add_style(roller, &roller_style, LV_PART_SELECTED);
 }
 
@@ -632,11 +639,11 @@ void create_visualizer(){
     lv_obj_remove_style_all(row_container);
 
     lv_style_init(&br_style);
-    lv_style_set_bg_color(&br_style, VIZUALIZER_COLOR);
+    lv_style_set_bg_color(&br_style, VIZUALIZER_ACTIVE_COLOUR);
     lv_style_set_border_width(&br_style, 0);
 
     lv_style_init(&bg_style);
-    lv_style_set_bg_color(&bg_style, VIZUALIZER_COLOR_BG);
+    lv_style_set_bg_color(&bg_style, VIZUALIZER_INACTIVE_COLOUR);
     lv_style_set_border_width(&bg_style, 0);
 
 
@@ -674,8 +681,8 @@ void generic_obj_format(lv_obj_t* o, lv_color_t c){
 
 void bar_style(lv_obj_t* bar, lv_style_t* bg, lv_style_t* ind){
 
-    lv_color_t inner_color = lv_color_hex(0x822E28);
-    lv_color_t outer_color = lv_color_hex(0xCC483F);
+    lv_color_t inner_color = BAR_INNER_COLOUR;
+    lv_color_t outer_color = BAR_OUTER_COLOUR;
     
     //border
     lv_style_init(bg);
