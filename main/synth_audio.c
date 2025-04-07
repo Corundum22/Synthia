@@ -31,13 +31,15 @@ uint_fast16_t *current_wave2 = sin_array;
 
 
 // Get value for single voice
-static inline uint_fast16_t wave(uint_fast8_t midi_note_number, uint_fast16_t multiply_val, uint_fast32_t time) {
+static inline uint_fast16_t wave(
+        uint_fast8_t midi_note_number, uint_fast16_t multiply_val, uint_fast32_t time) {
     uint_fast32_t ratio_numerator = ratio_num[midi_note_number];
     uint_fast32_t ratio_denominator = ratio_denom[midi_note_number];
 
     uint_fast32_t point_in_cycle = ((time * ratio_numerator) / ratio_denominator) & 0b11111111;
 
-    uint_fast16_t result = (current_wave1[point_in_cycle] * wave_blend_syn) + (current_wave2[point_in_cycle] * wave_blend_pair_syn);
+    uint_fast16_t result = (current_wave1[point_in_cycle] * wave_blend_syn) 
+        + (current_wave2[point_in_cycle] * wave_blend_pair_syn);
     result = (result * multiply_val) >> (MULTIPLIER_WIDTH + BLEND_VAL_MAX_BITS);
     return result;
 }
@@ -132,7 +134,7 @@ void task_audio_generate() {
         for (uint_fast16_t i = 0; i < AUDIO_BUF_SIZE * NUM_DAC_CHANNELS; i += NUM_DAC_CHANNELS) {
             uint_fast16_t data = audio_sample_get(time);
             
-            data_array[i] = (uint8_t) data;
+            data_array[i] = data & 0b11111111;
         
             time++;
         }

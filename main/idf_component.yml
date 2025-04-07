@@ -15,5 +15,4 @@ dependencies:
   #   # All dependencies of `main` are public by default.
   #   public: true
   atanisoft/esp_lcd_ili9488: ^1.0.10
-  espressif/esp_lvgl_port: ^2.4.4
   lvgl/lvgl: ^8.4.0

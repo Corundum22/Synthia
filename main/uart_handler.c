@@ -16,6 +16,8 @@ enum midi_event {
     note_on_velocity,
     note_off_key_num,
     note_off_velocity,
+    off_waiting,
+    on_waiting,
 };
 
 
@@ -63,11 +65,14 @@ void task_midi_uart(void *pvParameters) {
 
                 case UART_DATA:
                     uart_read_bytes(MIDI_UART_NUM, dtmp, event.size, portMAX_DELAY);
-                    //printf("Data received: %s\n", dtmp);
+                    if (dtmp[0] != 0xfe || dtmp[1] != 0x00 || dtmp[2] != 0x00)
+                        printf("Data received: %2x%2x%2x\n", dtmp[0], dtmp[1], dtmp[2]);
 
                     for (int i = 0; i < event.size; i++) {
 
                         switch (current_midi_event) {
+                            case on_waiting:
+                            case off_waiting:
                             case waiting:
                                 //printf("in waiting\n\n");
 
@@ -78,13 +83,26 @@ void task_midi_uart(void *pvParameters) {
                                     case (NOTE_OFF | STATUS_BIT):
                                         current_midi_event = note_off_key_num;
                                         break;
+                                    case (SYSTEM_MESSAGE | STATUS_BIT):
+                                        goto not_here;
                                     default:
                                         break;
                                 }
+
+                                if (current_midi_event == on_waiting && dtmp[i] != 0) {
+                                    goto note_on_midway;
+                                }
+                                if (current_midi_event == off_waiting && dtmp[i] != 0) {
+                                    key_num = dtmp[i];
+                                    goto note_off_completion_post_vel;
+                                }
+                                //if (current_midi_event == off_waiting || current_midi_event == on_waiting) current_midi_event = waiting;
+
                                 break;
 
                             case note_on_key_num:
                                 //printf("in on key num\n\n");
+                                note_on_midway:
                                 key_num = dtmp[i];
                                 current_midi_event = note_on_velocity;
                                 break;
@@ -98,7 +116,7 @@ void task_midi_uart(void *pvParameters) {
                             case note_on_velocity:
                                 velocity = dtmp[i];
                                 //printf("in on velocity %d\n\n", velocity);
-                                current_midi_event = waiting;
+                                current_midi_event = on_waiting;
                                 if (velocity != 0) {
                                     set_keypress(key_num);
                                 } else {
@@ -109,7 +127,8 @@ void task_midi_uart(void *pvParameters) {
                             case note_off_velocity:
                                 //printf("in off velocity\n\n");
                                 velocity = dtmp[i];
-                                current_midi_event = waiting;
+                                note_off_completion_post_vel:
+                                current_midi_event = off_waiting;
                                 set_keyrelease(key_num);
                                 break;
                         }
@@ -147,6 +166,7 @@ void task_midi_uart(void *pvParameters) {
                     //printf("MIDI: a useless event occurred\n");
                     break;
             }
+            not_here:
         }
     }
     free(dtmp);

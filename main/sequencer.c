@@ -95,7 +95,7 @@ bool next_is_on_squ_press = true;
 
 void sequencer_timer_callback() {
 	// Execute if sequencer is enabled
-    if (squ_enable_squ) {
+    //if (squ_enable_squ) {
         if (next_is_on_squ_press) {
 
             set_squ_keypress(squ_pattern[squ_index]);
@@ -112,9 +112,7 @@ void sequencer_timer_callback() {
         next_is_on_squ_press = !next_is_on_squ_press;
         update_squ_timer(squ_tempo_squ);
 
-    }
-
-    printf("%d\n", squ_index);
+    //}
 }
 
 void program_sequencer(uint_fast8_t key_num){
@@ -131,13 +129,13 @@ void program_sequencer(uint_fast8_t key_num){
 }
 
 inline static int_fast16_t get_squ_duration_sided() {
-    return (next_is_on_squ_press) ? squ_duration_squ : (SQU_DURATION_MAX - squ_duration_squ);
+    return (!next_is_on_squ_press) ? squ_duration_squ : (SQU_DURATION_MAX - squ_duration_squ);
 }
 
 void update_squ_timer(int_fast16_t new_val) {
     int_fast16_t squ_duration_sided = get_squ_duration_sided();
 
-    uint64_t us_new_val = ((BPM_US_FACTOR / (new_val * TEMPO_PERIOD_MULTIPLIER)) * squ_duration_sided) >> SQU_DURATION_WIDTH;
+    uint64_t us_new_val = ((BPM_US_FACTOR / new_val) * squ_duration_sided) >> SQU_DURATION_WIDTH;
     ESP_ERROR_CHECK(esp_timer_restart(sequencer_timer_handle, us_new_val));
 }
 
@@ -149,7 +147,7 @@ void pause_squ_timer() {
 void resume_squ_timer(int_fast16_t us_val) {
     int_fast16_t squ_duration_sided = get_squ_duration_sided();
 
-    uint64_t us_new_val = ((BPM_US_FACTOR / (us_val * TEMPO_PERIOD_MULTIPLIER)) * squ_duration_sided) >> SQU_DURATION_WIDTH;
+    uint64_t us_new_val = ((BPM_US_FACTOR / us_val) * squ_duration_sided) >> SQU_DURATION_WIDTH;
     ESP_ERROR_CHECK(esp_timer_start_periodic(sequencer_timer_handle, us_new_val));
 }
 

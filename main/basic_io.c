@@ -392,6 +392,7 @@ static int32_t rotary_encoder_interpret(uint_fast32_t mv_voltage, rotary_state* 
             }
             break;
         case rforward2:
+            // TODO: test with MIDHIGH instead
             if (mv_voltage > ROTARY_MIDLOW_TARGET - ROTARY_DELTA) {
                 *state = rforward3;
                 return 1;
@@ -471,6 +472,10 @@ void ledc_init() {
         .hpoint = 0,
     };
     ESP_ERROR_CHECK(ledc_channel_config(&low_pass_ledc_channel_conf));
+
+    // Set initial duty cycle of low pass
+    ESP_ERROR_CHECK(ledc_set_duty(LEDC_MODE, LOW_PASS_LEDC_CHANNEL, DEFAULT_LOW_PASS_VAL));
+    ESP_ERROR_CHECK(ledc_update_duty(LEDC_MODE, LOW_PASS_LEDC_CHANNEL));
 
     // Configure high-pass pwm control
     ledc_channel_config_t high_pass_ledc_channel_conf = {
