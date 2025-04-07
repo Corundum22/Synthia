@@ -394,15 +394,18 @@ void update_ui_cb(lv_timer_t* timer) {
                         }
                     }
 
+                    
+                    uint_fast8_t curr = (squ_program_index_gui+63)%64;
+                    lv_obj_set_style_border_color(array[curr][0], (squ_program_index_gui+squ_program_index_gui/8)%2 ? WHITE_SQUARE_BORDER : BLACK_SQUARE_BORDER, LV_PART_MAIN | LV_STATE_DEFAULT);
+                    update_midi_note_name(squ_pattern_gui[curr]);
+
                     if(squ_program_index_gui == 0){
                         for(int i = 0; i < 64; i++){
                             lv_label_set_text(array[i][1], " ");
+                            update_midi_note_name(0);
                         }
                     }
 
-                    uint_fast8_t curr = (squ_program_index_gui+63)%64;
-                    lv_obj_set_style_border_color(array[curr][0], (squ_program_index_gui+squ_program_index_gui/8)%2 ? WHITE_SQUARE_BORDER : BLACK_SQUARE_BORDER, LV_PART_MAIN | LV_STATE_DEFAULT);
-                    update_midi_note_name(squ_pattern_gui[squ_program_index_gui]);
 
                     lv_label_set_text_fmt(array[curr][1], "%s", midi_note_name);
                     lv_obj_set_style_border_color(array[squ_program_index_gui][0], lv_color_hex(0x0000ff), LV_PART_MAIN | LV_STATE_DEFAULT);
