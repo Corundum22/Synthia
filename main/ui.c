@@ -397,26 +397,26 @@ void update_ui_cb(lv_timer_t* timer) {
                         }
                     }
 
-                    lv_obj_set_style_border_color(array[squ_index_gui][0], (squ_index_gui+squ_index_gui/8)%2 ? BLACK_SQUARE_BORDER : WHITE_SQUARE_BORDER, LV_PART_MAIN | LV_STATE_DEFAULT);
-                    update_midi_note_name(squ_pattern_gui[squ_index_gui]);
+                    lv_obj_set_style_border_color(array[squ_program_index_gui][0], (squ_program_index_gui+squ_program_index_gui/8)%2 ? BLACK_SQUARE_BORDER : WHITE_SQUARE_BORDER, LV_PART_MAIN | LV_STATE_DEFAULT);
+                    update_midi_note_name(squ_pattern_gui[squ_program_index_gui]);
 
-                    if(squ_index_gui == 0){
+                    if(squ_program_index_gui == 0){
                         for(int i = 0; i < 64; i++){
                             lv_label_set_text(array[i][1], " ");
                         }
                     }
 
-                    lv_label_set_text_fmt(array[squ_index_gui][1], "%s", midi_note_name);
-                    lv_obj_set_style_border_color(array[(squ_index_gui+1)%64][0], lv_color_hex(0x0000ff), LV_PART_MAIN | LV_STATE_DEFAULT);
+                    lv_label_set_text_fmt(array[squ_program_index_gui][1], "%s", midi_note_name);
+                    lv_obj_set_style_border_color(array[(squ_program_index_gui+1)%64][0], lv_color_hex(0x0000ff), LV_PART_MAIN | LV_STATE_DEFAULT);
                 }
                 
-                lv_label_set_text_fmt(progress_text, "Progress: %d/%d", squ_index_gui+1, squ_length_gui);
+                lv_label_set_text_fmt(progress_text, "Progress: %d/%d", squ_program_index_gui+1, squ_program_index_gui);
                 lv_label_set_text(enable_text, !squ_enable_gui ? "Programming Mode" : "Playback Mode");
                 lv_label_set_text_fmt(length_text, "Length: %d", squ_length_gui);
                 lv_label_set_text_fmt(tempo_text, "Tempo: %d", squ_tempo_gui);
                 lv_label_set_text_fmt(duration_text, "Duration: %d%%", squ_duration_gui);
 
-                lv_bar_set_value(progress_bar, squ_index_gui, 1);
+                lv_bar_set_value(progress_bar, squ_program_index_gui, 1);
                 squ_enable_old = squ_enable_gui;
                 break;
         }
