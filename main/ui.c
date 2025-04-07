@@ -411,12 +411,13 @@ void update_ui_cb(lv_timer_t* timer) {
                     lv_obj_set_style_border_color(array[squ_program_index_gui][0], lv_color_hex(0x0000ff), LV_PART_MAIN | LV_STATE_DEFAULT);
                 }
                 
-                lv_label_set_text_fmt(progress_text, "Progress: %d/%d", squ_program_index_gui+1, 64);
+                lv_label_set_text_fmt(progress_text, "Progress: %d/%d", squ_program_index_gui+1, squ_length_gui);
                 lv_label_set_text(enable_text, !squ_enable_gui ? "Programming Mode" : "Playback Mode");
                 lv_label_set_text_fmt(length_text, "Length: %d", squ_length_gui);
                 lv_label_set_text_fmt(tempo_text, "Tempo: %d", squ_tempo_gui);
                 lv_label_set_text_fmt(duration_text, "Duration: %d%%", squ_duration_gui);
 
+                lv_bar_set_range(progress_bar, squ_length_gui);
                 lv_bar_set_value(progress_bar, squ_program_index_gui, LV_ANIM_ON);
                 squ_enable_old = squ_enable_gui;
                 break;
