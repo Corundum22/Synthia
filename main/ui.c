@@ -237,8 +237,6 @@ static lv_style_t br_style;
 static lv_style_t bg_style;
 int wunused_variable = 0;
 
-uint32_t mask = 0;
-
 //ROLLER
 
 bool menu_not_stable = false;
@@ -373,7 +371,6 @@ void update_ui_cb(lv_timer_t* timer) {
                 if(squ_enable_gui){
                     // Playback Mode
 
-                    //Update playback pattern
                     if(squ_enable_old != squ_enable_gui){
                         for(int i = 0; i < 64; i++){
                             update_midi_note_name(squ_pattern_gui[i]);
@@ -397,20 +394,20 @@ void update_ui_cb(lv_timer_t* timer) {
                         }
                     }
 
-                    lv_obj_set_style_border_color(array[squ_program_index_gui][0], (squ_program_index_gui+squ_program_index_gui/8)%2 ? BLACK_SQUARE_BORDER : WHITE_SQUARE_BORDER, LV_PART_MAIN | LV_STATE_DEFAULT);
-                    update_midi_note_name(squ_pattern_gui[squ_program_index_gui]);
-
                     if(squ_program_index_gui == 0){
                         for(int i = 0; i < 64; i++){
                             lv_label_set_text(array[i][1], " ");
                         }
                     }
 
+                    lv_obj_set_style_border_color(array[squ_program_index_gui][0], (squ_program_index_gui+squ_program_index_gui/8)%2 ? BLACK_SQUARE_BORDER : WHITE_SQUARE_BORDER, LV_PART_MAIN | LV_STATE_DEFAULT);
+                    update_midi_note_name(squ_pattern_gui[squ_program_index_gui]);
+
                     lv_label_set_text_fmt(array[squ_program_index_gui][1], "%s", midi_note_name);
                     lv_obj_set_style_border_color(array[(squ_program_index_gui+1)%64][0], lv_color_hex(0x0000ff), LV_PART_MAIN | LV_STATE_DEFAULT);
                 }
                 
-                lv_label_set_text_fmt(progress_text, "Progress: %d/%d", squ_program_index_gui+1, squ_program_index_gui);
+                lv_label_set_text_fmt(progress_text, "Progress: %d/%d", squ_program_index_gui+1, 64);
                 lv_label_set_text(enable_text, !squ_enable_gui ? "Programming Mode" : "Playback Mode");
                 lv_label_set_text_fmt(length_text, "Length: %d", squ_length_gui);
                 lv_label_set_text_fmt(tempo_text, "Tempo: %d", squ_tempo_gui);
@@ -599,8 +596,6 @@ void create_roller(){
 
 void update_visualizer_vals(){
 
-    mask = 0;
-
     for(int i = 0; i < NUM_BARS; i++){
         bar_vals[i] = 0;
     }
@@ -610,11 +605,9 @@ void update_visualizer_vals(){
         if(note_properties_gui[i].is_sounding){
 
             uint_fast8_t band1 = freq_map[note_properties_gui[i].note_num].bar1;
-            mask = mask | (1 << band1);
             bar_vals[band1] += freq_map[note_properties_gui[i].note_num].weight1 * note_properties_gui[i].multiplier;
 
             uint_fast8_t band2 = freq_map[note_properties_gui[i].note_num].bar2;
-            mask = mask | (1 << band2);
             bar_vals[band2] += freq_map[note_properties_gui[i].note_num].weight2 * note_properties_gui[i].multiplier;
         }
     }
