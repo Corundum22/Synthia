@@ -118,6 +118,9 @@ void task_midi_uart(void *pvParameters) {
                                 //printf("in on velocity %d\n\n", velocity);
                                 current_midi_event = on_waiting;
                                 if (velocity != 0) {
+                                    if (key_num >= 125) {
+                                        break;
+                                    }
                                     set_keypress(key_num);
                                 } else {
                                     set_keyrelease(key_num);

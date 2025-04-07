@@ -143,7 +143,7 @@ static void initialize_display()
     ESP_ERROR_CHECK(esp_lcd_panel_init(lcd_handle));
     ESP_ERROR_CHECK(esp_lcd_panel_invert_color(lcd_handle, false));
     ESP_ERROR_CHECK(esp_lcd_panel_swap_xy(lcd_handle, false));
-    ESP_ERROR_CHECK(esp_lcd_panel_mirror(lcd_handle, false, false));
+    ESP_ERROR_CHECK(esp_lcd_panel_mirror(lcd_handle, true, true));
     ESP_ERROR_CHECK(esp_lcd_panel_set_gap(lcd_handle, 0, 0));
 #if ESP_IDF_VERSION < ESP_IDF_VERSION_VAL(5, 0, 0)
     ESP_ERROR_CHECK(esp_lcd_panel_disp_off(lcd_handle, false));

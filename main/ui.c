@@ -6,17 +6,17 @@
 
 //COLOURS
 
-#define MAIN_THEME_COLOUR 0x822E28
+#define MAIN_THEME_COLOUR 0x0098F2
 
 #define WHITE_SQUARE_BORDER         lv_color_hex(0xB0B0B0)
 #define BLACK_SQUARE_BORDER         lv_color_hex(0x606060)
 
 #define BAR_INNER_COLOUR            lv_color_hex(MAIN_THEME_COLOUR)
-#define BAR_OUTER_COLOUR            lv_color_hex(0xCC483F)
+#define BAR_OUTER_COLOUR            lv_color_hex(MAIN_THEME_COLOUR)
 
 #define ROLLER_COLOUR               lv_color_hex(MAIN_THEME_COLOUR)
 
-#define VIZUALIZER_ACTIVE_COLOUR    lv_color_hex(0xFF5A4E) //darker 0xC9473E //brightest FF5A4E
+#define VIZUALIZER_ACTIVE_COLOUR    lv_color_hex(MAIN_THEME_COLOUR) //darker 0xC9473E //brightest FF5A4E
 #define VIZUALIZER_INACTIVE_COLOUR  lv_color_hex(MAIN_THEME_COLOUR)
 #define VIZUALIZER_MAXCOLOR         lv_color_hex(0x0000BF)
 
@@ -422,7 +422,7 @@ void update_ui_cb(lv_timer_t* timer) {
                 lv_label_set_text(enable_text, !squ_enable_gui ? "Programming Mode" : "Playback Mode");
                 lv_label_set_text_fmt(length_text, "Length: %d", squ_length_gui);
                 lv_label_set_text_fmt(tempo_text, "Tempo: %d", squ_tempo_gui);
-                lv_label_set_text_fmt(duration_text, "Duration: %d%%", squ_duration_gui);
+                lv_label_set_text_fmt(duration_text, "Duration: %d%%", (squ_duration_gui*100)/255);
 
                 lv_bar_set_range(progress_bar, 0, squ_length_gui);
                 lv_bar_set_value(progress_bar, squ_program_index_gui, LV_ANIM_ON);
@@ -720,7 +720,7 @@ void create_ui(){
 }
 
 void update_midi_note_name(uint_fast8_t num){
-    if(num > 127 || num == 0){
+    if(num > 124 || num == 0){
         midi_note_name[0] = '\0';
         return;
     }

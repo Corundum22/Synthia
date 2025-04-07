@@ -473,9 +473,9 @@ void ledc_init() {
     };
     ESP_ERROR_CHECK(ledc_channel_config(&low_pass_ledc_channel_conf));
 
-    // Set initial duty cycle of low pass
-    ESP_ERROR_CHECK(ledc_set_duty(LEDC_MODE, LOW_PASS_LEDC_CHANNEL, DEFAULT_LOW_PASS_VAL));
-    ESP_ERROR_CHECK(ledc_update_duty(LEDC_MODE, LOW_PASS_LEDC_CHANNEL));
+    // Set initial duty cycle of filters
+    apply_low_pass(DEFAULT_LOW_PASS_VAL);
+    apply_high_pass(DEFAULT_HIGH_PASS_VAL);
 
     // Configure high-pass pwm control
     ledc_channel_config_t high_pass_ledc_channel_conf = {
@@ -515,6 +515,10 @@ void gpio_init() {
         .pull_down_en = 0,
     };
     gpio_config(&io_output_conf);
+    
+    // Initialize states to keep soft and hard clipping off by default
+    ESP_ERROR_CHECK(gpio_set_level(HARD_CLIPPING_EN, 1));
+    ESP_ERROR_CHECK(gpio_set_level(SOFT_CLIPPING_EN, 1));
 }
 
 static bool adc_calibration_init(adc_unit_t unit, adc_channel_t channel, adc_atten_t atten, adc_cali_handle_t *out_handle) {
