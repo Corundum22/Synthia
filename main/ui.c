@@ -378,7 +378,7 @@ void update_ui_cb(lv_timer_t* timer) {
                             lv_obj_set_style_border_color(array[i][0], (i+i/8)%2 ? BLACK_SQUARE_BORDER : WHITE_SQUARE_BORDER, LV_PART_MAIN | LV_STATE_DEFAULT);
                         }
                     }
-                    uint_fast8_t prev = (squ_program_index_gui+63)%64;
+                    uint_fast8_t prev = (squ_index_gui+63)%64;
                     lv_obj_set_style_border_color(array[prev][0], (prev+prev/8)%2 ? BLACK_SQUARE_BORDER : WHITE_SQUARE_BORDER, LV_PART_MAIN | LV_STATE_DEFAULT);
                     lv_obj_set_style_border_color(array[squ_index_gui][0], lv_color_hex(0xff0000), LV_PART_MAIN | LV_STATE_DEFAULT);
 
@@ -400,11 +400,12 @@ void update_ui_cb(lv_timer_t* timer) {
                         }
                     }
 
-                    lv_obj_set_style_border_color(array[squ_program_index_gui][0], (squ_program_index_gui+squ_program_index_gui/8)%2 ? BLACK_SQUARE_BORDER : WHITE_SQUARE_BORDER, LV_PART_MAIN | LV_STATE_DEFAULT);
+                    uint_fast8_t curr = (squ_program_index_gui+63)%64;
+                    lv_obj_set_style_border_color(array[curr][0], (squ_program_index_gui+squ_program_index_gui/8)%2 ? BLACK_SQUARE_BORDER : WHITE_SQUARE_BORDER, LV_PART_MAIN | LV_STATE_DEFAULT);
                     update_midi_note_name(squ_pattern_gui[squ_program_index_gui]);
 
-                    lv_label_set_text_fmt(array[squ_program_index_gui][1], "%s", midi_note_name);
-                    lv_obj_set_style_border_color(array[(squ_program_index_gui+1)%64][0], lv_color_hex(0x0000ff), LV_PART_MAIN | LV_STATE_DEFAULT);
+                    lv_label_set_text_fmt(array[curr][1], "%s", midi_note_name);
+                    lv_obj_set_style_border_color(array[squ_program_index_gui][0], lv_color_hex(0x0000ff), LV_PART_MAIN | LV_STATE_DEFAULT);
                 }
                 
                 lv_label_set_text_fmt(progress_text, "Progress: %d/%d", squ_program_index_gui+1, 64);
@@ -413,7 +414,7 @@ void update_ui_cb(lv_timer_t* timer) {
                 lv_label_set_text_fmt(tempo_text, "Tempo: %d", squ_tempo_gui);
                 lv_label_set_text_fmt(duration_text, "Duration: %d%%", squ_duration_gui);
 
-                lv_bar_set_value(progress_bar, squ_program_index_gui, 1);
+                lv_bar_set_value(progress_bar, squ_program_index_gui, LV_ANIM_ON);
                 squ_enable_old = squ_enable_gui;
                 break;
         }
