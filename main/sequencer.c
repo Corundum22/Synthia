@@ -15,6 +15,7 @@
 #include "data_y_splitter.h"
 #include "esp_timer.h"
 #include "sequencer.h"
+#include "semaphore.h"
 
 
 // test_pattern is a temporary pattern of midi note numbers
@@ -124,6 +125,8 @@ void program_sequencer(uint_fast8_t key_num){
         if (squ_program_index >= squ_length_squ) {
             squ_program_index = 0;
         }
+
+        xSemaphoreGive(ySplitterSemaphore);
     }
 
 }
