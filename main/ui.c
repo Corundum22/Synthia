@@ -708,7 +708,7 @@ void create_ui(){
 }
 
 void update_midi_note_name(uint_fast8_t num){
-    if(num > 127){
+    if(num > 127 || num == 0){
         midi_note_name[0] = '\0';
         return;
     }
