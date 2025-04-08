@@ -524,6 +524,8 @@ void gpio_init() {
     ESP_ERROR_CHECK(gpio_set_level(SOFT_CLIPPING_EN, 1));
 }
 
+// The below function (adc_calibration_init) draws heavily on esp-idf example code
+// which is under the Apache 2.0 License
 static bool adc_calibration_init(adc_unit_t unit, adc_channel_t channel, adc_atten_t atten, adc_cali_handle_t *out_handle) {
     adc_cali_handle_t handle = NULL;
     esp_err_t ret = ESP_FAIL;

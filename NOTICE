@@ -1,0 +1,4 @@
+The Apache 2.0 License is included due to Espressif code, in the form of
+esp-idf example code, having been used in various places. The Apache 2.0
+license is applicable only to such code, which is marked using in-code
+comments.
