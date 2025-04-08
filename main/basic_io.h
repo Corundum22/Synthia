@@ -66,7 +66,7 @@
 #define EXTRA_SPEED_DECREASE 1
 #define EXTRA_SPEED_MINIMUM 1
 
-#define ANALOG_READ_LOOP_MS      7
+#define ANALOG_READ_LOOP_MS      8
 
 #define ROTARY_HIGH_MIN          2900
 #define ROTARY_DELTA             200

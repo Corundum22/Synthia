@@ -400,7 +400,8 @@ static int32_t rotary_encoder_interpret(uint_fast32_t mv_voltage, rotary_state* 
             break;
         case rforward2:
             // TODO: test with MIDHIGH instead
-            if (mv_voltage > ROTARY_MIDLOW_TARGET - ROTARY_DELTA) {
+            //if (mv_voltage > ROTARY_MIDLOW_TARGET - ROTARY_DELTA) {
+            if (mv_voltage > ROTARY_MIDHIGH_TARGET - ROTARY_DELTA) {
                 *state = rforward3;
                 return 1;
             }

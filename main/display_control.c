@@ -187,7 +187,7 @@ static void initialize_lvgl()
 }
 
 static void set_ui_update() {
-    lv_timer_t *lv_update_timer = lv_timer_create(update_ui_cb, 150, NULL);
+    lv_timer_t *lv_update_timer = lv_timer_create(update_ui_cb, 250, NULL);
     lv_timer_ready(lv_update_timer);
 }
 
@@ -201,7 +201,7 @@ void task_display()
     
     while (1)
     {
-        vTaskDelay(pdMS_TO_TICKS(10));
+        vTaskDelay(pdMS_TO_TICKS(100));
 
         if (pdTRUE == xSemaphoreTake(guiSemaphore, portMAX_DELAY)) {
             lv_timer_handler();
