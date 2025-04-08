@@ -19,6 +19,7 @@
 #include <stdio.h>
 #include "sdkconfig.h"
 #include "ui.h"
+#include "esp_task_wdt.h"
 
 #define USE_DOUBLE_BUFFERING 1
 
@@ -206,5 +207,7 @@ void task_display()
             lv_timer_handler();
             xSemaphoreGive(guiSemaphore);
         }
+
+        esp_task_wdt_reset();
     }
 }

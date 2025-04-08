@@ -18,6 +18,7 @@
 #include "data_y_splitter.h"
 #include "global_header.h"
 #include "sequencer.h"
+#include "esp_task_wdt.h"
 
 
 
@@ -177,7 +178,7 @@ static inline void apply_deltas() {
                     pause_squ_timer();
                 }
             }
-            squ_length_val = saturation_add(squ_length_val, pot_2_fast_delta, 0, SEQ_LEN);
+            squ_length_val = saturation_add(squ_length_val, pot_2_fast_delta, 1, SEQ_LEN);
             if (pot_3_fast_delta) {
                 squ_tempo_val = saturation_add(squ_tempo_val, pot_3_fast_delta, 1, 255);
                 if (squ_enable_val) {
@@ -248,6 +249,10 @@ void apply_high_pass(uint8_t val_to_apply) {
 
 void task_adc() {
 
+    // Set initial duty cycle of filters
+    apply_low_pass((uint8_t) low_pass_val);
+    apply_high_pass((uint8_t) high_pass_val);
+
     while (1) {
         
         int adc_result = 0;
@@ -293,6 +298,8 @@ void task_adc() {
         update_extra_delta_speed();
 
         vTaskDelay(pdMS_TO_TICKS(ANALOG_READ_LOOP_MS));
+
+        esp_task_wdt_reset();
     }
 }
 
@@ -472,10 +479,6 @@ void ledc_init() {
         .hpoint = 0,
     };
     ESP_ERROR_CHECK(ledc_channel_config(&low_pass_ledc_channel_conf));
-
-    // Set initial duty cycle of filters
-    apply_low_pass(DEFAULT_LOW_PASS_VAL);
-    apply_high_pass(DEFAULT_HIGH_PASS_VAL);
 
     // Configure high-pass pwm control
     ledc_channel_config_t high_pass_ledc_channel_conf = {

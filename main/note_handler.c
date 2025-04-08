@@ -67,10 +67,10 @@ void set_keypress(uint_fast8_t key_num) {
 }
 
 void set_keyrelease(uint_fast8_t key_num) {
-    printf("Set keyrelease called with:\nnum = %d\n", key_num);
+    //printf("Set keyrelease called with:\nnum = %d\n", key_num);
     for (int i = 0; i < NUM_VOICES; i++) {
         if (note_properties[i].note_num == key_num && note_properties[i].is_pressed == true) {
-            printf("Keyrelease accepted\n\n");
+            //printf("Keyrelease accepted\n\n");
             note_properties[i].is_pressed = false;
             note_properties[i].envelope_state = release;
         }

@@ -88,12 +88,14 @@ void data_split_init() {
 
 void task_data_split() {
     while (1) {
-        if (pdTRUE == xSemaphoreTake(ySplitterSemaphore, portMAX_DELAY)) {
+        if (pdTRUE == xSemaphoreTake(ySplitterSemaphore, pdMS_TO_TICKS(500))) {
             copy_squ();
             copy_gui();
             copy_nh();
             copy_syn();
         }
+
+        esp_task_wdt_reset();
     }
 }
 

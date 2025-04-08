@@ -66,7 +66,7 @@ void task_midi_uart(void *pvParameters) {
                 case UART_DATA:
                     uart_read_bytes(MIDI_UART_NUM, dtmp, event.size, portMAX_DELAY);
                     if (dtmp[0] != 0xfe || dtmp[1] != 0x00 || dtmp[2] != 0x00)
-                        printf("Data received: %2x%2x%2x\n", dtmp[0], dtmp[1], dtmp[2]);
+                        //printf("Data received: %2x%2x%2x\n", dtmp[0], dtmp[1], dtmp[2]);
 
                     for (int i = 0; i < event.size; i++) {
 

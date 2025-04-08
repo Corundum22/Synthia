@@ -12,6 +12,7 @@
 #include "sequencer.h"
 #include "data_y_splitter.h"
 #include "basic_io.h"
+#include "esp_task_wdt.h"
 #include <string.h>
 
 
@@ -144,6 +145,7 @@ void task_audio_generate() {
 
         ESP_ERROR_CHECK(dac_continuous_write_cyclically(dac_handle, data_array, AUDIO_BUF_SIZE * NUM_DAC_CHANNELS, NULL));
    
+        esp_task_wdt_reset();
 
     }
 }
